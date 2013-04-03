@@ -3,24 +3,25 @@
  *
  * Ejemplo basico de uso de /proc 
  * 1) Crear un archivo en /proc/aiso en la funcion <init_module>,
- * 2) Devolver un valor y un buffer cuando leemos la entrada /proc/helloworld en la funcion callback <procfs_read>
- * 3) Borrar el archivo /proc/aiso en la function <cleanup_module>.
+ * 2) Copiar una cadena en el buffer en la llamada <write>
+ * 3) Volvar el contentido del buffer en la llamada <read>
+ * 4) Borrar el archivo /proc/aiso en la function <cleanup_module>.
  */
 
-#include <linux/module.h>	/* Specifically, a module */
-#include <linux/kernel.h>	/* We're doing kernel work */
-#include <linux/proc_fs.h>	/* Necessary because we use the proc fs */
-#include <asm/uaccess.h>    /* copy_from_user */
+#include <linux/module.h>	/* modulo */
+#include <linux/kernel.h>	/* kernel */
+#include <linux/proc_fs.h>	/* struct proc_dir_entry */
+#include <asm/uaccess.h>    /* function copy_from_user */
 
 #define procfs_name "aiso"
 #define MAX_SIZE    4096
 
 /*
- * struct proc_dir_entry{
- * ...
- * read_proc_t read_proc;  => read callback
- * write_proc *write_proc; => write callback
- * ...
+ * struct proc_dir_entry {
+ *   ...
+ *   read_proc_t read_proc;  => read callback
+ *   write_proc *write_proc; => write callback
+ *   ...
  * };
  */
 static struct proc_dir_entry *entrada_proc;
@@ -28,31 +29,12 @@ static struct proc_dir_entry *entrada_proc;
 static char buffer_copia[MAX_SIZE];
 static unsigned long buffer_size = 0;
 
-/* Put data into the proc fs file.
- * 
- * Arguments
- * =========
- * 1. The buffer where the data is to be inserted, if
- *    you decide to use it.
- * 2. A pointer to a pointer to characters. This is
- *    useful if you don't want to use the buffer
- *    allocated by the kernel.
- * 3. The current position in the file
- * 4. The size of the buffer in the first argument.
- * 5. Write a "1" here to indicate EOF.
- * 6. A pointer to data (useful in case one common 
- *    read for multiple /proc/... entries)
+/** 
+ * Funcion que se llama cuando leemos del archivo /proc : "cat"
  *
- * Usage and Return Value
- * ======================
- * A return value of zero means you have no further
- * information at this time (end of file). A negative
- * return value is an error condition.
- *
- */ 
-
-/* 
- * This function is called then the /proc file is read: cat
+ * @param buffer donde copiaremos los datos
+ * @param offset posicion actual del archivo
+ * @return 0 si se ha acabado el archivo; valor negativo en caso de error
  */
 int read_proc(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
@@ -73,20 +55,21 @@ int read_proc(char *buffer, char **buffer_location, off_t offset, int buffer_len
 }
 
 /**
- * This function is called with the /proc file is written: echo
+ * Funcion que se llama cuando escribimos en /proc : "echo"
  *
- * @2
- * @3
+ * @param buffer cadena de entrada
+ * @param count numero de caracteres a copiar
+ * @return caracteres copiados
  */
 int write_proc(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-	/* get buffer size */
+	/* copiamos como maximo MAX_SIZE caracteres */
 	buffer_size = count;
 	if (buffer_size > MAX_SIZE ) {
 		buffer_size = MAX_SIZE;
 	}
 	
-	/* write data to the buffer */
+	/* copiamos el contendio de <buffer> en <buffer_copia> */
 	if ( copy_from_user(buffer_copia, buffer, buffer_size) ) {
 		return -EFAULT;
 	}
@@ -96,8 +79,8 @@ int write_proc(struct file *file, const char *buffer, unsigned long count, void 
 
 /*
  * Crear la entrada_proc y rellenar la estructura, indicando
- * Que funcion se llamara en el read: read_proc
- * Que funcion se llamara en el write: write_proc
+ * Que funcion se llamara en el read    => read_proc
+ * Que funcion se llamara en el write   => write_proc
  */
 int modulo_aiso_init(void)
 {
@@ -105,8 +88,7 @@ int modulo_aiso_init(void)
 	
 	if (entrada_proc == NULL) {
 		remove_proc_entry(procfs_name, NULL);
-		printk(KERN_ALERT "Error: Could not initialize /proc/%s\n",
-		       procfs_name);
+		printk(KERN_ALERT "Error: No se pudo inicializar la entrada /proc/%s\n", procfs_name);
 		return -ENOMEM;
 	}
 
