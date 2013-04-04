@@ -1,0 +1,1 @@
+cmd_/home/manutero/AISO/hello2/hello2.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-2.6.32-21-generic/scripts/module-common.lds --build-id -o /home/manutero/AISO/hello2/hello2.ko /home/manutero/AISO/hello2/hello2.o /home/manutero/AISO/hello2/hello2.mod.o

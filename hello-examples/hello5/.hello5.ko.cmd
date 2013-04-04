@@ -1,0 +1,1 @@
+cmd_/home/manutero/AISO/hello5/hello5.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-2.6.32-21-generic/scripts/module-common.lds --build-id -o /home/manutero/AISO/hello5/hello5.ko /home/manutero/AISO/hello5/hello5.o /home/manutero/AISO/hello5/hello5.mod.o
