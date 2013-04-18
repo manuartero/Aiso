@@ -59,7 +59,12 @@ extern int modificar_indice(struct file *file, const char *buffer, unsigned long
  */
 extern int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    // TODO
+    /* encontrar el buffer en el que vamos a escribir */
+    bool encontrado = false;    
+    while (!encontrado)    
+
+    /* buffer seleccionado <= buffer */
+
     return 0;
 }
 

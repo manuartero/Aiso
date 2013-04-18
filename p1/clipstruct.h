@@ -2,7 +2,6 @@
  #define CLIPSTRUCT_H
 
 #include <linux/list.h>
-#define TAM_BUFFER 4096
 
 struct clipstruct {
     unsigned int id;

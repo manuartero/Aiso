@@ -15,7 +15,6 @@
 #include <linux/kernel.h>	/* kernel */
 #include <linux/proc_fs.h>	/* struct proc_dir_entry */
 #include <linux/list.h>     /* listas del kernel */
-#include <asm/uaccess.h>    /* funcion copy_from_user */
 #include <linux/vmalloc.h>  /* funcion vmalloc */
 #include "clipstruct.h"     /* struct clipstruct */
 #include "clipboard.h"      /* funciones lectura y escritura */
@@ -32,6 +31,6 @@ static inline int crear_lista(void);
 static inline int crear_entrada_clipboard(void);
 static inline int crear_entrada_selector(void);
 static inline void liberar_lista(void);
-static inline void eliminar_entrada(char *entrada);
+static inline void eliminar_entrada(char *entrada, struct proc_dir_entry *parent);
 
 

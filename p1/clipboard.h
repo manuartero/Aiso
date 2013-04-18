@@ -8,6 +8,12 @@
 #include <asm/uaccess.h>    /* function copy_from_user */
 #include "clipstruct.h"     /* struct clipstruct */
 
+#define TAM_BUFFER 4096
+
+typedef int bool;
+#define true 1
+#define false 0
+
 extern int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
 extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
 extern int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data);

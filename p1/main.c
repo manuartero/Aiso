@@ -5,9 +5,9 @@ module_exit(modulo_aiso_clean);
 
 static struct proc_dir_entry *directorio;
 static struct proc_dir_entry *entrada_proc;
-static struct proc_dir_entry *indice;
+static struct proc_dir_entry *selector;
 LIST_HEAD( lista_clipboards );
-static struct clipstruct *elemento_actual;
+static unsigned int elemento_actual;
 
 
 /* ================================================================ */
@@ -45,9 +45,9 @@ extern int modulo_aiso_init(void)
 extern void modulo_aiso_clean(void)
 {
 	liberar_lista();
-    eliminar_entrada(nombre_selector);
-    eliminar_entrada(nombre_entrada);
-    eliminar_entrada(nombre_directorio);
+    eliminar_entrada(nombre_selector, directorio);
+    eliminar_entrada(nombre_entrada, directorio);
+    eliminar_entrada(nombre_directorio, NULL);
 }
 
 // ---------------------------------------------------------
@@ -71,7 +71,8 @@ static inline int crear_directorio(void)
 
 static inline int crear_lista(void)
 {
-    struct clipstruct *elemento;    
+    struct clipstruct *elemento;
+    struct list_head *pos;
     int i;
     
     for (i=1; i<=TAM; i++){
@@ -81,13 +82,18 @@ static inline int crear_lista(void)
         list_add(&elemento->lista, &lista_clipboards);
     }
 
-    /* elemento_actual apunta al primer elemento */
-    /*  TODO
-    elemento_actual = list_entry(lista_clipboards, struct clipstruct, lista);
-    printk(KERN_INFO "elemento_actual tiene: %d", elemento_actual->id);
-    */
-
     printk(KERN_INFO "Creada la lista \n");
+    
+    /* elemento_actual apunta al primer elemento */
+    elemento_actual = 0;  
+    //printk("elemento_actual apunta a %d")    
+    
+    /* lista_clipboards es una constante */
+    /*  pos =  &lista_clipboards;   
+        elemento_actual = list_entry(pos, struct clipstruct, lista);
+        printk(KERN_INFO "elemento_actual tiene: %d", elemento_actual->id);
+    */
+    
     return 0;
 }
 
@@ -110,14 +116,14 @@ static inline int crear_entrada_clipboard(void)
 static inline int crear_entrada_selector(void)
 {
     /* creamos la entrada seleccion */
-    indice = create_proc_entry(nombre_selector, 0644, directorio);
+    selector = create_proc_entry(nombre_selector, 0644, directorio);
     
     /* Rellenar la estructura */
-    indice->read_proc     = leer_indice;
-    indice->write_proc    = modificar_indice;
-    indice->mode 	      = S_IFREG | S_IRUGO;
-    indice->uid 	      = 0; 
-    indice->gid 	      = 0;
+    selector->read_proc     = leer_indice;
+    selector->write_proc    = modificar_indice;
+    selector->mode 	      = S_IFREG | S_IRUGO;
+    selector->uid 	      = 0; 
+    selector->gid 	      = 0;
    
     printk(KERN_INFO "Creada la entrada /proc/%s/%s \n", nombre_directorio, nombre_selector);
 	
@@ -130,17 +136,18 @@ static inline void liberar_lista(void)
     struct clipstruct *tmp;
     list_for_each_safe(pos, q, &lista_clipboards){
         tmp = list_entry(pos, struct clipstruct, lista);
+        vfree(tmp->buffer);
         printk("liberamos el nodo: %d | ", tmp->id);
+        vfree(tmp);        
         list_del(pos);
-        vfree(tmp);
     }
     printk("Lista eliminada \n");
     return;
 }
 
-static inline void eliminar_entrada(char *entrada)
+static inline void eliminar_entrada(char *entrada, struct proc_dir_entry *parent)
 {
-    remove_proc_entry(entrada, NULL);
+    remove_proc_entry(entrada, parent);
     printk(KERN_INFO "Eliminada la entrada %s", entrada);
 }
 
