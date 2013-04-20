@@ -10,7 +10,7 @@ struct proc_dir_entry *entrada_proc;
 struct proc_dir_entry *selector;
 struct list_head lista_clipboards;
 unsigned int elemento_actual;
-
+LIST_HEAD( lista_clipboards );
 
 /* ----------------------------------------------------------- */
 
@@ -24,9 +24,7 @@ unsigned int elemento_actual;
 int modulo_aiso_init(void)
 {
     int error;    
-    
-    LIST_HEAD( lista_clipboards );
-    
+     
     error = crear_directorio();
     error = crear_lista(); 
     error = crear_entrada_clipboard(); 
@@ -64,7 +62,7 @@ static int crear_directorio(void)
     // comprobacion de errores
 	if (directorio == NULL) {
 		remove_proc_entry(nombre_directorio, NULL);
-		printk(KERN_ALERT "Error: No se pudo crear el directorio /proc/%s\n", nombre_directorio);
+		printk(KERN_ALERT "Error: No se pudo crear el directorio /%s\n", nombre_directorio);
 		return -ENOMEM;
 	}
 
@@ -111,7 +109,7 @@ static int crear_entrada_clipboard(void)
     entrada_proc->uid 	        = 0; //id user: default 0 
     entrada_proc->gid 	        = 0; //group user: default 0
    
-    printk(KERN_INFO "Creada la entrada /proc/%s/%s \n", nombre_directorio, nombre_entrada);
+    printk(KERN_INFO "Creada la entrada /%s/%s \n", nombre_directorio, nombre_entrada);
     return 0;
 }
 
