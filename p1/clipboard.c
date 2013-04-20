@@ -85,8 +85,7 @@ extern int escribir_clipboard(struct file *file, const char *buffer, unsigned lo
     }
     printk(KERN_INFO "Salimos de escribir_clipboard\n");
     
-    // return buffer_size
-    return 0;
+    return caracteres_copiar;
 }
 
 struct clipstruct* encontrar_clipboard(void)

@@ -85,7 +85,7 @@ static int crear_lista(void)
     printk(KERN_INFO "Creada la lista \n");
     
     /* elemento_actual apunta al primer elemento */
-    elemento_actual = 0;  
+    elemento_actual = 1;  
     //printk("elemento_actual apunta a %d")    
     
     /* lista_clipboards es una constante */
