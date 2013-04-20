@@ -1,1 +1,0 @@
-cmd_/home/manutero/Aiso/p1/p1.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-2.6.32-21-generic/scripts/module-common.lds --build-id -o /home/manutero/Aiso/p1/p1.ko /home/manutero/Aiso/p1/p1.o /home/manutero/Aiso/p1/p1.mod.o
