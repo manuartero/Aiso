@@ -46,7 +46,18 @@ extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, in
 }
 
 /**
- * Funcion que se llama cuando escribimos en /proc : "echo"
+ * En buffer se almacena la entrada del usuario seguido de un salto de linea
+ * Ejemplo: 34 => [3|4|\n|········]
+ *  
+ * En codigo ASCI 
+ *
+ * | char | codigo | 
+ * |:----:|:------:|
+ * | '0'  |  48    |
+ * | '1'  |  49    |
+ * | '2'  |  50    |
+ * | '9'  |  57    |
+ * | '\n' |  10    |
  *
  * @param buffer cadena de entrada
  * @param count numero de caracteres a copiar
@@ -54,8 +65,20 @@ extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, in
  */
 extern int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data)
 {
+    int nuevo_elemento;
+    
+    /* transformar 'c' en int */
+    nuevo_elemento = atoi(buffer);
+    
+    /* Comprobar que nos han llamado con un id existente */
     // TODO
-    return 0;
+    if (true) {
+        elemento_actual = nuevo_elemento;
+        printk(KERN_INFO "Salimos de modificar_indice; elemento_actual = %d\n", elemento_actual);
+    } else {
+        printk(KERN_ALERT "modificar_indice => error");
+    }
+    return 4;  // tamaño de 1 byte 
 }
 
 /**
@@ -103,3 +126,24 @@ struct clipstruct* encontrar_clipboard(void)
     return tmp;
 }
 
+int atoi(const char* p)
+{
+    int numero_leido;
+    int i = 0; 
+    int numero = 0;
+    
+    // FIXME while( i < (sizeof p)/4 )
+    while (1) {
+      numero_leido = p[i];
+      if (numero_leido == 10) {
+        return numero_leido;
+      } 
+      numero_leido = numero_leido - 48;
+      if (i == 0) {
+        numero = numero_leido;
+      } else {
+        numero = numero * 10 + numero_leido;
+      }
+      i++;
+    }
+}

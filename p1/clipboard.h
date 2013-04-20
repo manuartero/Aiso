@@ -7,7 +7,6 @@
 #include <linux/list.h>     /* listas del kernel */
 #include <asm/uaccess.h>    /* function copy_from_user */
 #include "clipstruct.h"     /* struct clipstruct */
-#include "boolean.h"        /* boolean */
 
 /* Declaracion de macros */
 #define TAM_MAX_BUFFER 4096
@@ -19,7 +18,8 @@ int modificar_indice(struct file *file, const char *buffer, unsigned long count,
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data);
 
 /* Declaracion de funciones auxiliares */
-struct clipstruct* encontrar_clipboard(void);
+struct clipstruct* encontrar_clipboard(void); // ¿Por que no se puede definir static?
+int atoi(const char* p);
 
 #endif /* CLIPBOARD_H */
 
