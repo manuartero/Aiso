@@ -7,17 +7,19 @@
 #include <linux/list.h>     /* listas del kernel */
 #include <asm/uaccess.h>    /* function copy_from_user */
 #include "clipstruct.h"     /* struct clipstruct */
+#include "boolean.h"        /* boolean */
 
-#define TAM_BUFFER 4096
+/* Declaracion de macros */
+#define TAM_MAX_BUFFER 4096
 
-typedef int bool;
-#define true 1
-#define false 0
+/* Declaracion de funciones */
+int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data);
+int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data);
 
-extern int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
-extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
-extern int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data);
-extern int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data);
+/* Declaracion de funciones auxiliares */
+struct clipstruct* encontrar_clipboard(void);
 
 #endif /* CLIPBOARD_H */
 

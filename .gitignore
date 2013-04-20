@@ -1,9 +1,8 @@
 *.ko
 *.mod
+*.mod.c
 *.o
+*.o.cmd
 .tmp_versions/
 *.symvers
 *.order
-.proc1.*
-proc1.mod.c
-

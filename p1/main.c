@@ -1,17 +1,18 @@
 #include "main.h"
+
 MODULE_LICENSE("GPL");
 module_init(modulo_aiso_init);
 module_exit(modulo_aiso_clean);
 
-static struct proc_dir_entry *directorio;
-static struct proc_dir_entry *entrada_proc;
-static struct proc_dir_entry *selector;
-LIST_HEAD( lista_clipboards );
-static unsigned int elemento_actual;
+/* Variables globales */ 
+struct proc_dir_entry *directorio;
+struct proc_dir_entry *entrada_proc;
+struct proc_dir_entry *selector;
+struct list_head lista_clipboards;
+unsigned int elemento_actual;
 
 
-/* ================================================================ */
-
+/* ----------------------------------------------------------- */
 
 /**
  * crear el directior aisoclip
@@ -20,9 +21,11 @@ static unsigned int elemento_actual;
  * 
  * inicializar la lista
  */
-extern int modulo_aiso_init(void)
+int modulo_aiso_init(void)
 {
     int error;    
+    
+    LIST_HEAD( lista_clipboards );
     
     error = crear_directorio();
     error = crear_lista(); 
@@ -42,7 +45,7 @@ extern int modulo_aiso_init(void)
  * Liberar la lista
  * Eliminar el directorio
  */
-extern void modulo_aiso_clean(void)
+void modulo_aiso_clean(void)
 {
 	liberar_lista();
     eliminar_entrada(nombre_selector, directorio);
@@ -54,7 +57,7 @@ extern void modulo_aiso_clean(void)
 // Funciones auxiliares
 // ---------------------------------------------------------
 
-static inline int crear_directorio(void)
+static int crear_directorio(void)
 {
     directorio = proc_mkdir(nombre_directorio, NULL); 	
     
@@ -69,16 +72,15 @@ static inline int crear_directorio(void)
     return 0;
 }
 
-static inline int crear_lista(void)
+static int crear_lista(void)
 {
     struct clipstruct *elemento;
-    struct list_head *pos;
     int i;
     
     for (i=1; i<=TAM; i++){
         elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
         elemento->id = i;
-        elemento->buffer = (char *) vmalloc( sizeof(TAM_BUFFER) );
+        elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
         list_add(&elemento->lista, &lista_clipboards);
     }
 
@@ -97,7 +99,7 @@ static inline int crear_lista(void)
     return 0;
 }
 
-static inline int crear_entrada_clipboard(void)
+static int crear_entrada_clipboard(void)
 {
     /* creamos la entrada principal */
     entrada_proc = create_proc_entry(nombre_entrada, 0644, directorio);
@@ -113,7 +115,7 @@ static inline int crear_entrada_clipboard(void)
     return 0;
 }
 
-static inline int crear_entrada_selector(void)
+static int crear_entrada_selector(void)
 {
     /* creamos la entrada seleccion */
     selector = create_proc_entry(nombre_selector, 0644, directorio);
@@ -130,7 +132,7 @@ static inline int crear_entrada_selector(void)
 	return 0;
 }
 
-static inline void liberar_lista(void)
+static void liberar_lista(void)
 {
     struct list_head *pos, *q;
     struct clipstruct *tmp;
