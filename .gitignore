@@ -1,4 +1,5 @@
 *.ko
+*.ko.cmd
 *.mod
 *.mod.c
 *.o
