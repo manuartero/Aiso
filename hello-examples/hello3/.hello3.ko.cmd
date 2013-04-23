@@ -1,1 +1,0 @@
-cmd_/home/manutero/AISO/hello3/hello3.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-2.6.32-21-generic/scripts/module-common.lds --build-id -o /home/manutero/AISO/hello3/hello3.ko /home/manutero/AISO/hello3/hello3.o /home/manutero/AISO/hello3/hello3.mod.o
