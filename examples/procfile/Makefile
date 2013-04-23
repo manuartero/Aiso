@@ -1,5 +1,4 @@
-obj-m += p1.o
-p1-objs := utiles.o clipboard.o main.o
+obj-m += proc1.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

@@ -4,11 +4,12 @@
 extern struct list_head lista_clipboards;
 extern unsigned int elemento_actual;
 unsigned long caracteres_copiar; //buffer_size
+static char buffer_seleccionado[TAM_MAX_BUFFER];
 
 /* ----------------------------------------------------------- */
 
 /** 
- * Funcion que se llama cuando leemos del archivo /proc : "cat"
+ * Funcion que se llama cuando leemos del archivo /proc/aisoclip/selection
  *
  * @param buffer donde copiaremos los datos
  * @param offset posicion actual del archivo
@@ -16,8 +17,20 @@ unsigned long caracteres_copiar; //buffer_size
  */
 extern int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
-    // TODO 
-    return 0;
+    int terminado;
+    
+    printk(KERN_INFO "leer_indice. Seleccionado: %d\n", elemento_actual);
+    
+    /* determinar si hemos terminado de escribir */
+    if (offset > 0) {
+        terminado = 0;
+    } else {
+        /* copiar el elemento_actual en el buffer del sistema */ 
+        memcpy(buffer, buffer_seleccionado, caracteres_copiar);
+        terminado = caracteres_copiar;
+    }
+    
+    return terminado;
 }
 
 /** 
@@ -30,6 +43,7 @@ extern int leer_indice(char *buffer, char **buffer_location, off_t offset, int b
 extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
     int terminado;
+    struct clipstruct *seleccionado = NULL;
     printk(KERN_INFO "leer_clipboard. Seleccionado: %d\n", elemento_actual);
     
     /* determinar si hemos terminado de escribir */
@@ -37,7 +51,7 @@ extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, in
         terminado = 0;
     } else {
         /* copiar el contendido del buffer del clipboard en el buffer del sistema */   
-        struct clipstruct *seleccionado = encontrar_clipboard();    
+        seleccionado = encontrar_clipboard();    
         memcpy(buffer, seleccionado->buffer, caracteres_copiar);
         terminado = caracteres_copiar;
     }
@@ -65,16 +79,19 @@ extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, in
  */
 extern int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    int nuevo_elemento;
+    int nuevo_elemento = 0;
     
     /* transformar 'c' en int */
-    nuevo_elemento = atoi(buffer);
+    nuevo_elemento = mi_atoi(buffer);
     
     /* Comprobar que nos han llamado con un id existente */
     // TODO
     if (true) {
         elemento_actual = nuevo_elemento;
-        printk(KERN_INFO "Salimos de modificar_indice; elemento_actual = %d\n", elemento_actual);
+        printk(KERN_INFO "Elemento_actual = %d\n", elemento_actual);
+        if ( copy_from_user(buffer_seleccionado, buffer, caracteres_copiar) ) {
+            return -EFAULT;
+        }
     } else {
         printk(KERN_ALERT "modificar_indice => error");
     }
@@ -126,24 +143,3 @@ struct clipstruct* encontrar_clipboard(void)
     return tmp;
 }
 
-int atoi(const char* p)
-{
-    int numero_leido;
-    int i = 0; 
-    int numero = 0;
-    
-    // FIXME while( i < (sizeof p)/4 )
-    while (1) {
-      numero_leido = p[i];
-      if (numero_leido == 10) {
-        return numero_leido;
-      } 
-      numero_leido = numero_leido - 48;
-      if (i == 0) {
-        numero = numero_leido;
-      } else {
-        numero = numero * 10 + numero_leido;
-      }
-      i++;
-    }
-}
