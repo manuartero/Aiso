@@ -20,7 +20,6 @@ LIST_HEAD( lista_clipboards );
 // kernel thread
 struct task_struct *clipkthread;
 int activo;
-int ticket;
 
 // Asignar el numero de clipboards por parametro
 module_param(num_clipboards, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -39,18 +38,24 @@ MODULE_PARM_DESC(num_clipboards, "Numero de clipboards");
 int modulo_aiso_init(void)
 {
     int error;    
-     
-    error = crear_directorio();
+    
+    error = crear_directorio(nombre_directorio);
     error = crear_lista(); 
+    error = crear_entrada(nombre_entrada, nombre_directorio, directorio, leer_clipboard, escribir_clipboard);
+    error = crear_entrada(nombre_selector, nombre_directorio, directorio, leer_indice, modificar_indice);
+    error = crear_entrada(nombre_periodo, nombre_directorio, directorio, leer_periodo, escribir_periodo);
+    
+    /*
     error = crear_entrada_clipboard(); 
     error = crear_entrada_selector();
-	
+	error = crear_entrada_periodo();
+	*/
     if (error != 0) {
         return -1;
     }    
     
 	/* arrancamos el kernel thread */
-  	clipkthread = kthread_run(escritura_thread, NULL,"escritura_thread");
+  	clipkthread = kthread_run(funcion_thread, NULL, "funcion_thread");
   	
   	if (clipkthread == (struct task_struct *) ERR_PTR) {
   		return -ENOMEM;
@@ -59,35 +64,6 @@ int modulo_aiso_init(void)
     return 0;
 }
 
-int escritura_thread(void *data) 
-{
-	allow_signal(SIGKILL);
-	printk(KERN_INFO "iniciando ejecuacion kernel thread.\n");
-	activo = 1;	  
-	
-	for(;;){
-		msleep(100);
-		if (kthread_should_stop()) {
-			activo = 0;
-			break;
-		}
-		
-		if (signal_pending(current)){
-			if (ticket == ESCRITURA_CLIPBOARD) {
-				printk(KERN_INFO "THREAD : ESCRITURA_CLIPBOARD.\n");
-			} else if (ticket == CAMBIO_CLIPBOARD) {
-				printk(KERN_INFO "THREAD: CAMBIO_CLIPBOARD.\n");
-			} else {
-				 /* señal desconocida */
-				 activo = 0;
-				 break;
-			}
-		}
-		
-	}
-	printk(KERN_INFO "finalizando ejecucion kernel thread.\n");
-	return 0;
-}
 
 /**
  * Eliminar la entrada seleccion
@@ -101,6 +77,7 @@ void modulo_aiso_clean(void)
 	liberar_lista();
     eliminar_entrada(nombre_selector, directorio);
     eliminar_entrada(nombre_entrada, directorio);
+    eliminar_entrada(nombre_periodo, directorio);
     eliminar_entrada(nombre_directorio, NULL);
     
     if (activo) {

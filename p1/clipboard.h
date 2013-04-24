@@ -11,9 +11,6 @@
 #include "utiles.h"          /* funciones utiles */
 
 /* Declaracion de macros */
-#define nombre_directorio "aisoclip"
-#define nombre_entrada "clipboard"
-#define nombre_selector "selection"
 #define CAMBIO_CLIPBOARD 4
 #define ESCRITURA_CLIPBOARD 5
 #define TAM_MAX_BUFFER 4096
@@ -23,10 +20,15 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
 int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
 int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data);
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data);
-int crear_directorio(void);
+int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data);
+int crear_directorio(const char *);
 int crear_lista(void);
-int crear_entrada_clipboard(void);
-int crear_entrada_selector(void);
+int crear_entrada( 	const char * nombre_entrada, const char * nombre_directorio, struct proc_dir_entry *directorio,
+					int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
+					int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data) );
+//int crear_entrada_clipboard(void);
+//int crear_entrada_selector(void);
 void liberar_lista(void);
 inline void eliminar_entrada(char *entrada, struct proc_dir_entry *parent);
 

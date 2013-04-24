@@ -7,8 +7,16 @@ extern struct proc_dir_entry *selector;
 extern struct list_head lista_clipboards;
 extern unsigned int elemento_actual;
 extern unsigned int num_clipboards;
-extern int ticket;
 
+int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
+{
+	// TODO
+}
+
+int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data)
+{
+	// TODO
+}
 
 /** 
  * Funcion que se llama cuando leemos del archivo /proc/aisoclip/selection
@@ -100,7 +108,6 @@ int modificar_indice(struct file *file, const char *buffer, unsigned long count,
     }
   
     elemento_actual = nuevo_elemento;
-    ticket = CAMBIO_CLIPBOARD;
     
     printk(KERN_INFO "Elemento_actual = %d\n", elemento_actual);
     
@@ -135,7 +142,6 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
         return -EFAULT;
     }
     
-    ticket = ESCRITURA_CLIPBOARD;
     printk(KERN_INFO "Salimos de escribir_clipboard\n");
     
     return seleccionado->num_elem;
@@ -173,7 +179,7 @@ struct clipstruct* insertar_nuevo_clipboard(void)
     return elemento;
 }
 
-int crear_directorio(void)
+int crear_directorio(const char* nombre_directorio)
 {
     directorio = proc_mkdir(nombre_directorio, NULL); 	
     
@@ -213,32 +219,35 @@ int crear_lista(void)
 }
 
 /**
- * Crea la entrada /proc/clipboards
+ * Crea la entrada especificada en el directorio /proc/directorio especificado
  *
  * @return int exito
  */
-int crear_entrada_clipboard(void)
+int crear_entrada( const char * nombre_entrada, const char * nombre_directorio, struct proc_dir_entry *directorio,
+							 int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
+							 int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data) )
 {
     /* creamos la entrada principal */
     entrada_proc = create_proc_entry(nombre_entrada, 0644, directorio);
     
     /* Rellenar la estructura */
-    entrada_proc->read_proc     = leer_clipboard;
-    entrada_proc->write_proc    = escribir_clipboard;
+    entrada_proc->read_proc     = leer;
+    entrada_proc->write_proc    = escribir;
     entrada_proc->mode 	        = S_IFREG | S_IRUGO;
-    entrada_proc->uid 	        = 0; //id user: default 0 
-    entrada_proc->gid 	        = 0; //group user: default 0
+    entrada_proc->uid 	        = 0; // id user 
+    entrada_proc->gid 	        = 0; //group user
    
     printk(KERN_INFO "Creada la entrada /%s/%s \n", nombre_directorio, nombre_entrada);
     return 0;
 }
 
+/*
 int crear_entrada_selector(void)
 {
-    /* creamos la entrada seleccion */
+    // creamos la entrada seleccion 
     selector = create_proc_entry(nombre_selector, 0644, directorio);
     
-    /* Rellenar la estructura */
+    // Rellenar la estructura
     selector->read_proc     = leer_indice;
     selector->write_proc    = modificar_indice;
     selector->mode 	      = S_IFREG | S_IRUGO;
@@ -249,6 +258,7 @@ int crear_entrada_selector(void)
 	
 	return 0;
 }
+*/
 
 void liberar_lista(void)
 {
