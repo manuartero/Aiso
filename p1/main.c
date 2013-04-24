@@ -78,6 +78,7 @@ static int crear_lista(void)
     for (i=1; i<=TAM; i++){
         elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
         elemento->id = i;
+        elemento->num_elem = 0;
         elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
         list_add(&elemento->lista, &lista_clipboards);
     }

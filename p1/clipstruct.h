@@ -5,6 +5,7 @@
 
 struct clipstruct {
     unsigned int id;
+    unsigned int num_elem;
     char* buffer;
     struct list_head lista;
 };
