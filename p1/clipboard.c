@@ -3,9 +3,12 @@
 /* Variables globales */
 extern struct list_head lista_clipboards;
 extern unsigned int elemento_actual;
+extern unsigned int tam;
 // Este contador dice a memcpy cuantos cararcteres quieres leer
+/*
 unsigned long caracteres_copiar; //buffer_size
 static char buffer_seleccionado[TAM_MAX_BUFFER];
+*/
 
 /* ----------------------------------------------------------- */
 
@@ -19,21 +22,19 @@ static char buffer_seleccionado[TAM_MAX_BUFFER];
 extern int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
     int terminado;
-     char buffer_prueba[10];
+	char mi_buff[10];
+    int caracteres_copiar;
     printk(KERN_INFO "leer_indice. Seleccionado: %d\n", elemento_actual);
-   
-    buffer_prueba[0] = elemento_actual+48;
-    buffer_prueba[1] = (char) 10;
-     printk(KERN_INFO "lo q tiene el bufer en 0 %c\n",buffer_prueba[0]);
-      printk(KERN_INFO "lo q tiene el bufer en 1 %d\n",buffer_prueba[1]);
-      caracteres_copiar = 2;
+   caracteres_copiar = snprintf(mi_buff,10,"%d\n",elemento_actual);
+
+     printk(KERN_INFO "lo q tiene el bufer en 0 %s\n",mi_buff);
     /* determinar si hemos terminado de escribir */
     if (offset > 0) {
         terminado = 0;
     } else {
         /* copiar el elemento_actual en el buffer del sistema */ 
         printk(KERN_INFO "entramos a copiar \n");
-        memcpy(buffer, buffer_prueba, caracteres_copiar);
+        memcpy(buffer, mi_buff, caracteres_copiar);
         terminado = caracteres_copiar;
     }
     
@@ -54,12 +55,13 @@ extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, in
     printk(KERN_INFO "leer_clipboard. Seleccionado: %d\n", elemento_actual);
     
     /* determinar si hemos terminado de escribir */
+    /*preguntar porque entra dos veces en el offset*/
     if (offset > 0) {
+    	printk(KERN_INFO "entramos en el offset\n");
         terminado = 0;
     } else {
         /* copiar el contendido del buffer del clipboard en el buffer del sistema */   
         seleccionado = encontrar_clipboard();    
-        printk(KERN_INFO "caracteres_copiar de leer clipboard %d\n",seleccionado->num_elem);
         memcpy(buffer, seleccionado->buffer, seleccionado->num_elem);
         terminado = seleccionado->num_elem;
     }
@@ -89,21 +91,22 @@ extern int modificar_indice(struct file *file, const char *buffer, unsigned long
 {
     int nuevo_elemento = 0;
     
-    /* transformar 'c' en int */
-    nuevo_elemento = mi_atoi(buffer);
-    caracteres_copiar = count;
+    /* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
+	if ((nuevo_elemento = mi_atoi(buffer))== -1)
+		return -EINVAL;
+
     /* Comprobar que nos han llamado con un id existente */
-    // TODO
-    if (true) {
-        elemento_actual = nuevo_elemento;
-        printk(KERN_INFO "Elemento_actual = %d\n", elemento_actual);
-        if ( copy_from_user(buffer_seleccionado, buffer, caracteres_copiar) ) {
-            return -EFAULT;
-        }
-    } else {
-        printk(KERN_ALERT "modificar_indice => error");
+    if (nuevo_elemento < 1 || nuevo_elemento > tam){
+    	printk(KERN_INFO "Numero fuera de rango de los clipboard, maximo tamaño = %d\n",tam);
+    	return -EINVAL;
     }
-    return 4;  // tamaño de 1 byte 
+  
+    elemento_actual = nuevo_elemento;
+    printk(KERN_INFO "Elemento_actual = %d\n", elemento_actual);
+    
+	//el numeroq pongas en ese return si es menor q el numero de count entonces vulve a llamar a la funcion con lo q le queda
+	// return 4;  // tamaño de 1 byte 
+    return count;
 }
 
 /**
@@ -132,7 +135,7 @@ extern int escribir_clipboard(struct file *file, const char *buffer, unsigned lo
         return -EFAULT;
     }
     printk(KERN_INFO "Salimos de escribir_clipboard\n");
-    printk (KERN_INFO "lo q tiene el buffer: %d\n", buffer[3]);
+    
     return seleccionado->num_elem;
 }
 

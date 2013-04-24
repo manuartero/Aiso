@@ -9,6 +9,7 @@ struct proc_dir_entry *directorio;
 struct proc_dir_entry *entrada_proc;
 struct proc_dir_entry *selector;
 struct list_head lista_clipboards;
+unsigned int tam = 5;
 unsigned int elemento_actual;
 LIST_HEAD( lista_clipboards );
 
@@ -75,7 +76,7 @@ static int crear_lista(void)
     struct clipstruct *elemento;
     int i;
     
-    for (i=1; i<=TAM; i++){
+    for (i=1; i<=tam; i++){
         elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
         elemento->id = i;
         elemento->num_elem = 0;
