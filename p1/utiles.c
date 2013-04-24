@@ -14,7 +14,7 @@ int mi_atoi(const char* p)
       } 
       
       if ( (numero_leido< 48) || (numero_leido > 57) ) {
-        printk(KERN_INFO "No introduciste un numero\n",p);
+        printk(KERN_INFO "No introduciste un numero%s\n",p);
         return -1;
       }
       

@@ -1,12 +1,14 @@
 #include "clipboard.h"
 
 /* Variables globales */
+extern struct proc_dir_entry *directorio;
+extern struct proc_dir_entry *entrada_proc;
+extern struct proc_dir_entry *selector;
 extern struct list_head lista_clipboards;
 extern unsigned int elemento_actual;
 extern unsigned int num_clipboards;
+extern int ticket;
 
-
-/* ----------------------------------------------------------- */
 
 /** 
  * Funcion que se llama cuando leemos del archivo /proc/aisoclip/selection
@@ -15,7 +17,7 @@ extern unsigned int num_clipboards;
  * @param offset posicion actual del archivo
  * @return 0 si se ha acabado el archivo; valor negativo en caso de error
  */
-extern int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
+int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
     int terminado;
 	char mi_buff[11];
@@ -44,7 +46,7 @@ extern int leer_indice(char *buffer, char **buffer_location, off_t offset, int b
  * @param offset posicion actual del archivo
  * @return 0 si se ha acabado el archivo; valor negativo en caso de error
  */
-extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
+int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
     int terminado;
     struct clipstruct *seleccionado = NULL;
@@ -83,7 +85,7 @@ extern int leer_clipboard(char *buffer, char **buffer_location, off_t offset, in
  * @param count numero de caracteres a copiar
  * @return caracteres copiados
  */
-extern int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data)
+int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data)
 {
     int nuevo_elemento = 0;
     
@@ -98,6 +100,8 @@ extern int modificar_indice(struct file *file, const char *buffer, unsigned long
     }
   
     elemento_actual = nuevo_elemento;
+    ticket = CAMBIO_CLIPBOARD;
+    
     printk(KERN_INFO "Elemento_actual = %d\n", elemento_actual);
     
 	//el numeroq pongas en ese return si es menor q el numero de count entonces vulve a llamar a la funcion con lo q le queda
@@ -112,7 +116,7 @@ extern int modificar_indice(struct file *file, const char *buffer, unsigned long
  * @param count numero de caracteres a copiar
  * @return caracteres copiados
  */
-extern int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
+int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
 {
     struct clipstruct *seleccionado;
     printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", elemento_actual);
@@ -130,6 +134,8 @@ extern int escribir_clipboard(struct file *file, const char *buffer, unsigned lo
     if ( copy_from_user(seleccionado->buffer, buffer, seleccionado->num_elem) ) {
         return -EFAULT;
     }
+    
+    ticket = ESCRITURA_CLIPBOARD;
     printk(KERN_INFO "Salimos de escribir_clipboard\n");
     
     return seleccionado->num_elem;
@@ -155,31 +161,9 @@ struct clipstruct* encontrar_clipboard(void)
     		
     return tmp;
 }
-//TODO
-/*
-void insertar_nuevo_clipboard(struct list_head *pos, boolean delante){
 
-	struct clipstruct *elemento;
-    struct list_head *pos1, *q;
-    struct clipstruct *tmp;
-    elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
-    elemento->id = elemento_actual;
-    elemento->num_elem = 0;
-    elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
-    if(delante)
-    	list_add(&elemento->lista, &pos);
-    else
-   		list_add_tail(&elemento->lista, &pos);
-		
-	list_for_each(pos1, q, &lista_clipboards){
-        tmp = list_entry(pos1, struct clipstruct, lista);
-        printk("nodo: %d\n ", tmp->id);
-	}
-}
-*/
-
-struct clipstruct* insertar_nuevo_clipboard(void){
-
+struct clipstruct* insertar_nuevo_clipboard(void)
+{
 	struct clipstruct *elemento;
     elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
     elemento->id = elemento_actual;
@@ -188,3 +172,102 @@ struct clipstruct* insertar_nuevo_clipboard(void){
     list_add(&elemento->lista, &lista_clipboards);
     return elemento;
 }
+
+int crear_directorio(void)
+{
+    directorio = proc_mkdir(nombre_directorio, NULL); 	
+    
+    // comprobacion de errores
+	if (directorio == NULL) {
+		remove_proc_entry(nombre_directorio, NULL);
+		printk(KERN_ALERT "Error: No se pudo crear el directorio /%s\n", nombre_directorio);
+		return -ENOMEM;
+	}
+
+    printk(KERN_INFO "Creado el directorio /proc/%s \n", nombre_directorio);
+    return 0;
+}
+
+/**
+ * Inicializa la lista de clipboards
+ *
+ * @return int exito
+ */
+int crear_lista(void)
+{
+    struct clipstruct *elemento;
+    
+    elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
+    elemento->id = 1;
+    elemento->num_elem = 0;
+    elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
+    list_add(&elemento->lista, &lista_clipboards);
+
+    printk(KERN_INFO "Creada la lista con un unico elemento\n");
+    
+    /* elemento_actual apunta al primer elemento */
+    elemento_actual = 1;  
+
+    
+    return 0;
+}
+
+/**
+ * Crea la entrada /proc/clipboards
+ *
+ * @return int exito
+ */
+int crear_entrada_clipboard(void)
+{
+    /* creamos la entrada principal */
+    entrada_proc = create_proc_entry(nombre_entrada, 0644, directorio);
+    
+    /* Rellenar la estructura */
+    entrada_proc->read_proc     = leer_clipboard;
+    entrada_proc->write_proc    = escribir_clipboard;
+    entrada_proc->mode 	        = S_IFREG | S_IRUGO;
+    entrada_proc->uid 	        = 0; //id user: default 0 
+    entrada_proc->gid 	        = 0; //group user: default 0
+   
+    printk(KERN_INFO "Creada la entrada /%s/%s \n", nombre_directorio, nombre_entrada);
+    return 0;
+}
+
+int crear_entrada_selector(void)
+{
+    /* creamos la entrada seleccion */
+    selector = create_proc_entry(nombre_selector, 0644, directorio);
+    
+    /* Rellenar la estructura */
+    selector->read_proc     = leer_indice;
+    selector->write_proc    = modificar_indice;
+    selector->mode 	      = S_IFREG | S_IRUGO;
+    selector->uid 	      = 0; 
+    selector->gid 	      = 0;
+   
+    printk(KERN_INFO "Creada la entrada /proc/%s/%s \n", nombre_directorio, nombre_selector);
+	
+	return 0;
+}
+
+void liberar_lista(void)
+{
+    struct list_head *pos, *q;
+    struct clipstruct *tmp;
+    list_for_each_safe(pos, q, &lista_clipboards){
+        tmp = list_entry(pos, struct clipstruct, lista);
+        vfree(tmp->buffer);
+        printk("liberamos el nodo: %d | ", tmp->id);
+        vfree(tmp);        
+        list_del(pos);
+    }
+    printk("Lista eliminada \n");
+    return;
+}
+
+inline void eliminar_entrada(char *entrada, struct proc_dir_entry *parent)
+{
+    remove_proc_entry(entrada, parent);
+    printk(KERN_INFO "Eliminada la entrada %s", entrada);
+}
+
