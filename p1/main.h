@@ -8,6 +8,8 @@
 #include <linux/moduleparam.h>  // paso de parametros
 #include <linux/init.h>         // macros
 #include <linux/stat.h>         //¿permisos?
+#include <linux/signal.h>
+#include <linux/kthread.h>
 
 /* Definicio de macros */
 #define nombre_directorio "aisoclip"
@@ -17,6 +19,7 @@
 /* Declaracion de funciones */
 int modulo_aiso_init(void);
 void modulo_aiso_clean(void);
+int escritura_thread(void *data); 
 
 /* Declaracion de funciones auxiliares */
 static int crear_directorio(void);

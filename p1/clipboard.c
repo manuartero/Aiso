@@ -3,7 +3,7 @@
 /* Variables globales */
 extern struct list_head lista_clipboards;
 extern unsigned int elemento_actual;
-extern unsigned int tam;
+extern unsigned int num_clipboards;
 
 
 /* ----------------------------------------------------------- */
@@ -92,8 +92,8 @@ extern int modificar_indice(struct file *file, const char *buffer, unsigned long
 		return -EINVAL;
 
     /* Comprobar que nos han llamado con un id existente */
-    if (nuevo_elemento < 1 || nuevo_elemento > tam){
-    	printk(KERN_INFO "Numero fuera de rango de los clipboard, maximo tamaño = %d\n",tam);
+    if (nuevo_elemento < 1 || nuevo_elemento > num_clipboards){
+    	printk(KERN_INFO "Numero fuera de rango de los clipboard, maximo tamaño = %d\n", num_clipboards);
     	return -EINVAL;
     }
   

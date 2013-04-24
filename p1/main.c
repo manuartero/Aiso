@@ -10,16 +10,17 @@ struct proc_dir_entry *directorio;
 struct proc_dir_entry *entrada_proc;
 struct proc_dir_entry *selector;
 struct list_head lista_clipboards;
-unsigned int tam = 5;
+unsigned int num_clipboards = 5;
 unsigned int elemento_actual;
 LIST_HEAD( lista_clipboards );
+struct task_struct *clipkthread;
+int activo;
+
+// Asignar el numero de clipboards por parametro
+module_param(num_clipboards, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+MODULE_PARM_DESC(num_clipboards, "Numero de clipboards");
 
 /* ----------------------------------------------------------- */
-
-// para asignar el numero de clipboards q queremos
-module_param(tam, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-MODULE_PARM_DESC(tam, "Numero de clipboards");
-
 
 /**
  * crear el directior aisoclip
@@ -27,6 +28,7 @@ MODULE_PARM_DESC(tam, "Numero de clipboards");
  *   crear la entrada selection => inicializar el puntero
  * 
  * inicializar la lista
+ * lanza el thread
  */
 int modulo_aiso_init(void)
 {
@@ -36,12 +38,40 @@ int modulo_aiso_init(void)
     error = crear_lista(); 
     error = crear_entrada_clipboard(); 
     error = crear_entrada_selector();
-
+	
     if (error != 0) {
         return -1;
     }    
-
+    
+	/* arrancamos el kernel thread */
+  	clipkthread = kthread_run(escritura_thread, NULL,"escritura_thread");
+  	
+  	if (clipkthread == (struct task_struct *) ERR_PTR) {
+  		return -ENOMEM;
+  	}
+  	
     return 0;
+}
+
+int escritura_thread(void *data) 
+{
+	allow_signal(SIGKILL);
+	printk(KERN_INFO "iniciando ejecuacion kernel thread.\n");
+	activo = 1;	  
+	
+	for(;;){
+		msleep(100);
+		if (signal_pending(current)){
+			activo = 0; 
+			break;
+		}
+		if (kthread_should_stop()) {
+			activo = 0;
+			break;
+		}
+	}
+	printk(KERN_INFO "finalizando ejecucion kernel thread.\n");
+	return 0;
 }
 
 /**
@@ -49,6 +79,7 @@ int modulo_aiso_init(void)
  * Eliminar la entrada clipboards
  * Liberar la lista
  * Eliminar el directorio
+ * Eliminar el thread si sigue activo
  */
 void modulo_aiso_clean(void)
 {
@@ -56,6 +87,14 @@ void modulo_aiso_clean(void)
     eliminar_entrada(nombre_selector, directorio);
     eliminar_entrada(nombre_entrada, directorio);
     eliminar_entrada(nombre_directorio, NULL);
+    
+    if (activo) {
+    	kthread_stop(clipkthread);
+  	} else {
+    	printk(KERN_INFO "El kernel thread ya no esta activo cuando descargamos el modulo.\n");
+  	}
+  	
+  	printk(KERN_INFO "Modulo descargado.\n");
 }
 
 // ---------------------------------------------------------
@@ -76,6 +115,7 @@ static int crear_directorio(void)
     printk(KERN_INFO "Creado el directorio /proc/%s \n", nombre_directorio);
     return 0;
 }
+
 //funcionq inicialzia toda la lista de clipboards
 /*static int crear_lista(void)*/
 /*{*/
