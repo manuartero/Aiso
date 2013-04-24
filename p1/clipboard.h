@@ -19,9 +19,11 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
 int modificar_indice(struct file *file, const char *buffer, unsigned long count, void *data);
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data);
 
+
 /* Declaracion de funciones auxiliares */
 struct clipstruct* encontrar_clipboard(void); // ¿Por que no se puede definir static?
-
+//void insertar_nuevo_clipboard(struct list_head *pos, boolean delante);
+struct clipstruct* insertar_nuevo_clipboard(void);
 
 #endif /* CLIPBOARD_H */
 

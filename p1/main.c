@@ -16,7 +16,7 @@ LIST_HEAD( lista_clipboards );
 
 /* ----------------------------------------------------------- */
 
-// int
+// para asignar el numero de clipboards q queremos
 module_param(tam, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 MODULE_PARM_DESC(tam, "Numero de clipboards");
 
@@ -76,31 +76,50 @@ static int crear_directorio(void)
     printk(KERN_INFO "Creado el directorio /proc/%s \n", nombre_directorio);
     return 0;
 }
+//funcionq inicialzia toda la lista de clipboards
+/*static int crear_lista(void)*/
+/*{*/
+/*    struct clipstruct *elemento;*/
+/*    int i;*/
+/*    */
+/*    for (i=1; i<=tam; i++){*/
+/*        elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );*/
+/*        elemento->id = i;*/
+/*        elemento->num_elem = 0;*/
+/*        elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );*/
+/*        list_add(&elemento->lista, &lista_clipboards);*/
+/*    }*/
+
+/*    printk(KERN_INFO "Creada la lista \n");*/
+/*    */
+/*     elemento_actual apunta al primer elemento */
+/*    elemento_actual = 1;  */
+/*    //printk("elemento_actual apunta a %d")    */
+/*    */
+/*    lista_clipboards es una constante */
+/*      pos =  &lista_clipboards;   */
+/*        elemento_actual = list_entry(pos, struct clipstruct, lista);*/
+/*        printk(KERN_INFO "elemento_actual tiene: %d", elemento_actual->id);*/
+/*    */
+/*    */
+/*    return 0;*/
+/*}*/
 
 static int crear_lista(void)
 {
     struct clipstruct *elemento;
-    int i;
     
-    for (i=1; i<=tam; i++){
-        elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
-        elemento->id = i;
-        elemento->num_elem = 0;
-        elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
-        list_add(&elemento->lista, &lista_clipboards);
-    }
+    elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
+    elemento->id = 1;
+    elemento->num_elem = 0;
+    elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
+    list_add(&elemento->lista, &lista_clipboards);
 
-    printk(KERN_INFO "Creada la lista \n");
+    printk(KERN_INFO "Creada la lista con un unico elemento\n");
     
     /* elemento_actual apunta al primer elemento */
     elemento_actual = 1;  
-    //printk("elemento_actual apunta a %d")    
-    
-    /* lista_clipboards es una constante */
-    /*  pos =  &lista_clipboards;   
-        elemento_actual = list_entry(pos, struct clipstruct, lista);
-        printk(KERN_INFO "elemento_actual tiene: %d", elemento_actual->id);
-    */
+
     
     return 0;
 }

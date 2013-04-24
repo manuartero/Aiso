@@ -143,14 +143,52 @@ struct clipstruct* encontrar_clipboard(void)
 {
     struct clipstruct *tmp = NULL;
     struct list_head *pos;
+    //boolean delante = true;
 
     list_for_each(pos, &lista_clipboards) {
         tmp = list_entry(pos, struct clipstruct, lista);
+        printk(KERN_INFO "id= %d\n", tmp->id);
         if (tmp->id == elemento_actual){
             break;        
         }
-    }    
-    
+      /*  if (tmp->id > elemento_actual)
+        	delante = false;*/
+    	}    
+    	if (tmp->id!= elemento_actual)
+    		return insertar_nuevo_clipboard();
+    		
     return tmp;
 }
+//TODO
+/*
+void insertar_nuevo_clipboard(struct list_head *pos, boolean delante){
 
+	struct clipstruct *elemento;
+    struct list_head *pos1, *q;
+    struct clipstruct *tmp;
+    elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
+    elemento->id = elemento_actual;
+    elemento->num_elem = 0;
+    elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
+    if(delante)
+    	list_add(&elemento->lista, &pos);
+    else
+   		list_add_tail(&elemento->lista, &pos);
+		
+	list_for_each(pos1, q, &lista_clipboards){
+        tmp = list_entry(pos1, struct clipstruct, lista);
+        printk("nodo: %d\n ", tmp->id);
+	}
+}
+*/
+
+struct clipstruct* insertar_nuevo_clipboard(void){
+
+	struct clipstruct *elemento;
+    elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
+    elemento->id = elemento_actual;
+    elemento->num_elem = 0;
+    elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
+    list_add(&elemento->lista, &lista_clipboards);
+    return elemento;
+}
