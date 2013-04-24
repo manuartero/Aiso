@@ -4,11 +4,7 @@
 extern struct list_head lista_clipboards;
 extern unsigned int elemento_actual;
 extern unsigned int tam;
-// Este contador dice a memcpy cuantos cararcteres quieres leer
-/*
-unsigned long caracteres_copiar; //buffer_size
-static char buffer_seleccionado[TAM_MAX_BUFFER];
-*/
+
 
 /* ----------------------------------------------------------- */
 
@@ -22,10 +18,10 @@ static char buffer_seleccionado[TAM_MAX_BUFFER];
 extern int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
     int terminado;
-	char mi_buff[10];
+	char mi_buff[11];
     int caracteres_copiar;
     printk(KERN_INFO "leer_indice. Seleccionado: %d\n", elemento_actual);
-   caracteres_copiar = snprintf(mi_buff,10,"%d\n",elemento_actual);
+   	caracteres_copiar = snprintf(mi_buff,11,"%d\n",elemento_actual);
 
      printk(KERN_INFO "lo q tiene el bufer en 0 %s\n",mi_buff);
     /* determinar si hemos terminado de escribir */

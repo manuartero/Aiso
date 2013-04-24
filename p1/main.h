@@ -13,7 +13,6 @@
 #define nombre_directorio "aisoclip"
 #define nombre_entrada "clipboard"
 #define nombre_selector "selection"
-//#define TAM 5
 
 /* Declaracion de funciones */
 int modulo_aiso_init(void);
