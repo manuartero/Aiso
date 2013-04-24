@@ -61,14 +61,23 @@ int escritura_thread(void *data)
 	
 	for(;;){
 		msleep(100);
-		if (signal_pending(current)){
-			activo = 0; 
-			break;
-		}
 		if (kthread_should_stop()) {
 			activo = 0;
 			break;
 		}
+		
+		if (signal_pending(current)){
+			if (current == ESCRITURA_CLIPBOARD) {
+				printk(KERN_INFO "THREAD : ESCRITURA_CLIPBOARD.\n");
+			} else if (current == CAMBIO_CLIPBOARD) {
+				printk(KERN_INFO "THREAD: CAMBIO_CLIPBOARD.\n");
+			} else {
+				 /* señal desconocida */
+				 activo = 0;
+				 break;
+			}
+		}
+		
 	}
 	printk(KERN_INFO "finalizando ejecucion kernel thread.\n");
 	return 0;

@@ -15,6 +15,8 @@
 #define nombre_directorio "aisoclip"
 #define nombre_entrada "clipboard"
 #define nombre_selector "selection"
+#define CAMBIO_CLIPBOARD 4
+#define ESCRITURA_CLIPBOARD 5
 
 /* Declaracion de funciones */
 int modulo_aiso_init(void);
