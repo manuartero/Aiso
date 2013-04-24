@@ -5,6 +5,9 @@
 #include <linux/vmalloc.h>  /* funcion vmalloc */
 #include "clipstruct.h"     /* struct clipstruct */
 #include "clipboard.h"      /* funciones lectura y escritura */
+#include <linux/moduleparam.h>  // paso de parametros
+#include <linux/init.h>         // macros
+#include <linux/stat.h>         //¿permisos?
 
 /* Definicio de macros */
 #define nombre_directorio "aisoclip"

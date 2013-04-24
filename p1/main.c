@@ -1,6 +1,7 @@
 #include "main.h"
 
 MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Antonio y Manu");
 module_init(modulo_aiso_init);
 module_exit(modulo_aiso_clean);
 
@@ -14,6 +15,11 @@ unsigned int elemento_actual;
 LIST_HEAD( lista_clipboards );
 
 /* ----------------------------------------------------------- */
+
+// int
+module_param(tam, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+MODULE_PARM_DESC(tam, "Numero de clipboards");
+
 
 /**
  * crear el directior aisoclip
