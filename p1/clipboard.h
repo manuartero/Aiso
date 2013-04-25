@@ -30,15 +30,17 @@ void modulo_clean(void);
 
 int crear_directorio(const char * nombre_directorio);
 
-int crear_directorio(const char * nombre_directorio, struct proc_dir_entry * directorio_padre);
+int crear_sub_directorio(const char * nombre_directorio, struct proc_dir_entry * directorio_padre);
 
 int crear_entrada(const char* nombre_entrada, struct proc_dir_entry *directorio,
-    int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
-    int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data));
+ int (*leer) (char*, char**, off_t, int, int*, void*),
+ int (*escribir) (struct file*, const char*, unsigned long, void*)
+); 
+    
 
 inline void eliminar_entrada(char * entrada);
 
-inline void eliminar_entrada(char * entrada, struct proc_dir_entry *parent);
+inline void eliminar_sub_entrada(char * entrada, struct proc_dir_entry *parent);
 
 int crear_lista(void);
 
