@@ -10,9 +10,11 @@
 #include <linux/moduleparam.h>      /* paso de parametros */
 #include "clipstruct.h"             /* struct clipstruct */
 #include "utiles.h"                 /* funciones utiles */
+//#include <linux/init.h>         // macros
+//#include <linux/stat.h>         //¿permisos?
 
 /* Declaracion de macros */
-#define nombre_entrada "clipboard"
+#define nombre_clipboard "clipboard"
 #define nombre_selector "selection"
 #define nombre_periodo "periodo"
 #define CAMBIO_CLIPBOARD 4
@@ -32,12 +34,10 @@ int crear_directorio(const char * nombre_directorio);
 
 int crear_sub_directorio(const char * nombre_directorio, struct proc_dir_entry * directorio_padre);
 
-int crear_entrada(const char* nombre_entrada, struct proc_dir_entry *directorio,
- int (*leer) (char*, char**, off_t, int, int*, void*),
- int (*escribir) (struct file*, const char*, unsigned long, void*)
-); 
+int crear_entrada(const char* nombre_entrada, struct proc_dir_entry *directorio, 
+                  int (*leer) (char*, char**, off_t, int, int*, void*), 
+                  int (*escribir) (struct file*, const char*, unsigned long, void*) ); 
     
-
 inline void eliminar_entrada(char * entrada);
 
 inline void eliminar_sub_entrada(char * entrada, struct proc_dir_entry *parent);
