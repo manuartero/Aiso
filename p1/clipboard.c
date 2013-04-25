@@ -97,7 +97,9 @@ void modulo_clean(void)
 /**
  *
  */
-int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre = NULL)
+int crear_directorio(const char* nombre_directorio){return crear_directorio(nombre_directorio, NULL);}
+
+int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre)
 {
     directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
     
@@ -117,7 +119,7 @@ int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * dire
  *
  * @return int exito
  */
-int crear_entrada(const char * nombre_entrada, struct proc_dir_entry * directorio,
+int crear_entrada(const char * nombre_entrada, struct proc_dir_entry *directorio,
 				   int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
 				   int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data) )
 {
@@ -140,7 +142,9 @@ int crear_entrada(const char * nombre_entrada, struct proc_dir_entry * directori
 /** 
  *
  */
-inline void eliminar_entrada(char * entrada, struct proc_dir_entry * parent=NULL)
+inline void eliminar_entrada(char * entrada){ eliminar_entrada(entrada, NULL); }
+
+inline void eliminar_entrada(char * entrada, struct proc_dir_entry * parent)
 {
     remove_proc_entry(entrada, parent);
     printk(KERN_INFO "Eliminada la entrada %s", entrada);

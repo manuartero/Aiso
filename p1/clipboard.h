@@ -25,30 +25,45 @@ int modulo_init(void);
 
 void modulo_clean(void);
 
+
 // funciones para crear-destruir estradas o directorios
 
-int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre);
+int crear_directorio(const char * nombre_directorio);
 
-int crear_entrada(const char * nombre_entrada, struct proc_dir_entry * directorio,
-		int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
-		int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data));
+int crear_directorio(const char * nombre_directorio, struct proc_dir_entry * directorio_padre);
 
-inline void eliminar_entrada(char *entrada, struct proc_dir_entry *parent);
+int crear_entrada(const char* nombre_entrada, struct proc_dir_entry *directorio,
+    int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
+    int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data));
+
+inline void eliminar_entrada(char * entrada);
+
+inline void eliminar_entrada(char * entrada, struct proc_dir_entry *parent);
 
 int crear_lista(void);
 
 void liberar_lista(void);
 
+
 // funciones de callback
+
 int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+
 int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+
 int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+
 int escribir_indice(struct file *file, const char *buffer, unsigned long count, void *data);
+
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data);
+
 int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data);
 
+
 // funciones auxiliares
+
 struct clipstruct* encontrar_clipboard(void);
+
 struct clipstruct* insertar_nuevo_clipboard(void);
 
 #endif /* CLIPBOARD_H */
