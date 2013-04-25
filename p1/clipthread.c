@@ -15,8 +15,8 @@ int _funcion_thread(void *data)
 	printk(KERN_INFO "iniciando ejecuacion kernel thread.\n");
 	activo = 1;	  
 	
-	/* Capturar la señal SIGUSR1 y asociarle la funcion tratamiento_signal() 
-   /* sa.sa_handler = tratamiento_signal; 
+	Capturar la señal SIGUSR1 y asociarle la funcion tratamiento_signal() 
+    sa.sa_handler = tratamiento_signal; 
     sigemptyset(&sa.sa_mask);  
     sa.sa_flags = 0; 
     sigaction(SIGUSR1, &sa, 0); //FIXME

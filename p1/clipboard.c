@@ -97,9 +97,9 @@ void modulo_clean(void)
 /**
  *
  */
-int crear_directorio(const char* nombre_directorio){return crear_directorio(nombre_directorio, NULL);}
+int crear_directorio(const char* nombre_directorio){return crear_sub_directorio(nombre_directorio, NULL);}
 
-int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre)
+int crear_sub_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre)
 {
     directorio_principal = proc_mkdir(nombre_directorio, directorio_padre); 	
     
