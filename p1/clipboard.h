@@ -21,17 +21,17 @@
 
 /* Declaracion de funciones */
 
-int modulo_aiso_init( void );
+int modulo_init(void);
 
-void modulo_aiso_clean( void );
+void modulo_clean(void);
 
 // funciones para crear-destruir estradas o directorios
 
-int crear_directorio( const char* nombre_directorio, struct proc_dir_entry * directorio_padre=NULL );
+int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre);
 
-int crear_entrada( const char * nombre_entrada, struct proc_dir_entry *directorio,
-				   int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
-				   int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data) );
+int crear_entrada(const char * nombre_entrada, struct proc_dir_entry * directorio,
+		int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
+		int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data));
 
 inline void eliminar_entrada(char *entrada, struct proc_dir_entry *parent);
 

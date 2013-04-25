@@ -7,10 +7,12 @@ module_exit(modulo_clean);
 
 /* Variables globales */ 
 struct proc_dir_entry * directorio;
-char[16] nombre_directorio = "Sin nombre \n";
+char* nombre_directorio = "Sin nombre \n";
+/*
 struct proc_dir_entry * entrada_clipboard;
 struct proc_dir_entry * entrada_selector;
 struct proc_dir_entry * entrada_periodo;
+*/
 struct list_head lista_clipboards;
 unsigned int num_clipboards = 5;
 unsigned int elemento_actual;
@@ -23,7 +25,7 @@ struct task_struct *clipkthread;
 int activo;
 
 // Asignar el numero de clipboards por parametro
-module_param(nombre_directorio, char[], S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+module_param(nombre_directorio, (char*), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 MODULE_PARM_DESC(nombre_directorio, "Nombre del clipboard");
 
 // Asignar el numero de clipboards por parametro
@@ -33,27 +35,22 @@ MODULE_PARM_DESC(num_clipboards, "Numero de clipboards");
 /* ----------------------------------------------------------- */
 
 /**
- * 1) Crear el directorio con el nombre pasado por argumento
- *   crear la entrada clipboard => inicializar la lista
- *   crear la entrada selection => inicializar el puntero
- *   crear la entrada periodo
+ * 1) Crea el directorio con el nombre pasado por argumento
+ *   crea la entrada clipboard => inicializar la lista
+ *   crea la entrada selection => inicializar el puntero
+ *   crea la entrada periodo
  * 2) Lanza el thread
  */
 int modulo_init(void)
 {
-    int error;    
-    
-    error = crear_directorio(nombre_directorio); //FIXME : segundo argumento es el dir padre
+    int error = 0;    
+  
+    error = crear_directorio(nombre_directorio); 
     error = crear_lista(); 
-    error = crear_entrada(nombre_entrada, nombre_directorio, directorio, leer_clipboard, escribir_clipboard);
-    error = crear_entrada(nombre_selector, nombre_directorio, directorio, leer_indice, escribir_indice);
-    error = crear_entrada(nombre_periodo, nombre_directorio, directorio, leer_periodo, escribir_periodo);
+    error = crear_entrada(nombre_entrada, directorio, leer_clipboard, escribir_clipboard);
+    error = crear_entrada(nombre_selector, directorio, leer_indice, escribir_indice);
+    error = crear_entrada(nombre_periodo, directorio, leer_periodo, escribir_periodo);
     
-    /*
-    error = crear_entrada_clipboard(); 
-    error = crear_entrada_selector();
-	error = crear_entrada_periodo();
-	*/
     if (error != 0) {
         return -1;
     }    
@@ -70,11 +67,11 @@ int modulo_init(void)
 
 
 /**
- * Eliminar la entrada seleccion
- * Eliminar la entrada clipboards
+ * Elimina la entrada seleccion
+ * Elimina la entrada clipboards
  * Liberar la lista
- * Eliminar el directorio
- * Eliminar el thread si sigue activo
+ * Elimina el directorio
+ * Elimina el thread si sigue activo
  */
 void modulo_clean(void)
 {
@@ -82,7 +79,7 @@ void modulo_clean(void)
     eliminar_entrada(nombre_selector, directorio);
     eliminar_entrada(nombre_entrada, directorio);
     eliminar_entrada(nombre_periodo, directorio);
-    eliminar_entrada(nombre_directorio, NULL);
+    eliminar_entrada(nombre_directorio);
     
     if (activo) {
     	kthread_stop(clipkthread);
@@ -100,7 +97,7 @@ void modulo_clean(void)
 /**
  *
  */
-int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre=NULL)
+int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre = NULL)
 {
     directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
     
@@ -120,7 +117,7 @@ int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * dire
  *
  * @return int exito
  */
-int crear_entrada( const char * nombre_entrada, struct proc_dir_entry *directorio,
+int crear_entrada(const char * nombre_entrada, struct proc_dir_entry * directorio,
 				   int (*leer) (char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data),
 				   int (*escribir) (struct file *file, const char *buffer, unsigned long count, void *data) )
 {
@@ -143,7 +140,7 @@ int crear_entrada( const char * nombre_entrada, struct proc_dir_entry *directori
 /** 
  *
  */
-inline void eliminar_entrada(char * entrada, struct proc_dir_entry * parent)
+inline void eliminar_entrada(char * entrada, struct proc_dir_entry * parent=NULL)
 {
     remove_proc_entry(entrada, parent);
     printk(KERN_INFO "Eliminada la entrada %s", entrada);
