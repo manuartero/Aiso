@@ -25,7 +25,7 @@ struct task_struct *clipkthread;
 int activo;
 
 // Asignar el numero de clipboards por parametro
-module_param(nombre_directorio, (char*), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+module_param(nombre_directorio, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 MODULE_PARM_DESC(nombre_directorio, "Nombre del clipboard");
 
 // Asignar el numero de clipboards por parametro
@@ -76,9 +76,9 @@ int modulo_init(void)
 void modulo_clean(void)
 {
 	liberar_lista();
-    eliminar_entrada(nombre_selector, directorio);
-    eliminar_entrada(nombre_entrada, directorio);
-    eliminar_entrada(nombre_periodo, directorio);
+    eliminar_sub_entrada(nombre_selector, directorio);
+    eliminar_sub_entrada(nombre_entrada, directorio);
+    eliminar_sub_entrada(nombre_periodo, directorio);
     eliminar_entrada(nombre_directorio);
     
     if (activo) {
@@ -142,9 +142,9 @@ int crear_entrada(const char * nombre_entrada, struct proc_dir_entry *directorio
 /** 
  *
  */
-inline void eliminar_entrada(char * entrada){ eliminar_entrada(entrada, NULL); }
+inline void eliminar_entrada(char * entrada){ eliminar_sub_entrada(entrada, NULL); }
 
-inline void eliminar_entrada(char * entrada, struct proc_dir_entry * parent)
+inline void eliminar_sub_entrada(char * entrada, struct proc_dir_entry * parent)
 {
     remove_proc_entry(entrada, parent);
     printk(KERN_INFO "Eliminada la entrada %s", entrada);
