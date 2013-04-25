@@ -6,7 +6,7 @@ module_init(modulo_init);
 module_exit(modulo_clean);
 
 /* Variables globales */ 
-struct proc_dir_entry * directorio;
+struct proc_dir_entry * directorio_principal;
 char* nombre_directorio = "Sin nombre \n";
 /*
 struct proc_dir_entry * entrada_clipboard;
@@ -47,9 +47,9 @@ int modulo_init(void)
   
     error = crear_directorio(nombre_directorio); 
     error = crear_lista(); 
-    error = crear_entrada(nombre_entrada, directorio, leer_clipboard, escribir_clipboard);
-    error = crear_entrada(nombre_selector, directorio, leer_indice, escribir_indice);
-    error = crear_entrada(nombre_periodo, directorio, leer_periodo, escribir_periodo);
+    error = crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
+    error = crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
+    error = crear_entrada(nombre_periodo, directorio_principal, leer_periodo, escribir_periodo);
     
     if (error != 0) {
         return -1;
@@ -76,9 +76,9 @@ int modulo_init(void)
 void modulo_clean(void)
 {
 	liberar_lista();
-    eliminar_sub_entrada(nombre_selector, directorio);
-    eliminar_sub_entrada(nombre_entrada, directorio);
-    eliminar_sub_entrada(nombre_periodo, directorio);
+    eliminar_sub_entrada(nombre_selector, directorio_principal);
+    eliminar_sub_entrada(nombre_clipboard, directorio_principal);
+    eliminar_sub_entrada(nombre_periodo, directorio_principal);
     eliminar_entrada(nombre_directorio);
     
     if (activo) {
@@ -101,10 +101,10 @@ int crear_directorio(const char* nombre_directorio){return crear_directorio(nomb
 
 int crear_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre)
 {
-    directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
+    directorio_principal = proc_mkdir(nombre_directorio, directorio_padre); 	
     
     // comprobacion de errores
-	if (directorio == NULL) {
+	if (directorio_principal == NULL) {
 		remove_proc_entry(nombre_directorio, directorio_padre);
 		printk(KERN_ALERT "Error: No se pudo crear el directorio /%s\n", nombre_directorio);
 		return -ENOMEM;
