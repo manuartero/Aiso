@@ -1,13 +1,13 @@
 #include "clipthread.h"
 
 extern int activo;
-/*
+
 int funcion_thread(void *data)
 {
 	return 0;
 }
-*/
-int funcion_thread(void *data) 
+/*
+int _funcion_thread(void *data) 
 {
 	struct sigaction sa;
 
@@ -15,11 +15,11 @@ int funcion_thread(void *data)
 	printk(KERN_INFO "iniciando ejecuacion kernel thread.\n");
 	activo = 1;	  
 	
-	/* Capturar la señal SIGUSR1 y asociarle la funcion tratamiento_signal() */
+	/* Capturar la señal SIGUSR1 y asociarle la funcion tratamiento_signal() 
    /* sa.sa_handler = tratamiento_signal; 
     sigemptyset(&sa.sa_mask);  
     sa.sa_flags = 0; 
-    sigaction(SIGUSR1, &sa, 0); //FIXME*/
+    sigaction(SIGUSR1, &sa, 0); //FIXME
 	
 	for(;;){
 		// sleep()
@@ -31,7 +31,7 @@ int funcion_thread(void *data)
 			break;
 		}
 		
-		
+		/*
 		if (signal_pending(current)){
 			if (ticket == ESCRITURA_CLIPBOARD) {
 				printk(KERN_INFO "THREAD : ESCRITURA_CLIPBOARD.\n");
@@ -50,7 +50,7 @@ int funcion_thread(void *data)
 	printk(KERN_INFO "finalizando ejecucion kernel thread.\n");
 	return 0;
 }
-
+*/
 void tratamiento_signal(int signal)
 {
 	printk(KERN_INFO "THREAD : ESCRITURA_CLIPBOARD.. o lo otro.\n");

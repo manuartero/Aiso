@@ -10,6 +10,7 @@
 #include <linux/moduleparam.h>      /* paso de parametros */
 #include "clipstruct.h"             /* struct clipstruct */
 #include "utiles.h"                 /* funciones utiles */
+#include "clipthread.h"
 //#include <linux/init.h>         // macros
 //#include <linux/stat.h>         //¿permisos?
 
