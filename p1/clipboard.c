@@ -45,7 +45,9 @@ int modulo_init(void)
 {
     int error = 0;    
   
-    error = crear_directorio(nombre_directorio); 
+    directorio_principal = (struct proc_dir_entry *) crear_directorio(nombre_directorio);
+    if (directorio_principal == NULL) {error = -1;}
+ 
     error = crear_lista(); 
     error = crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
     error = crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
@@ -97,21 +99,21 @@ void modulo_clean(void)
 /**
  *
  */
-int crear_directorio(const char* nombre_directorio){return crear_sub_directorio(nombre_directorio, NULL);}
+struct proc_dir_entry * crear_directorio(const char* nombre_directorio){return crear_sub_directorio(nombre_directorio, NULL);}
 
-int crear_sub_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre)
+struct proc_dir_entry * crear_sub_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre)
 {
-    directorio_principal = proc_mkdir(nombre_directorio, directorio_padre); 	
+    struct proc_dir_entry * directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
     
     // comprobacion de errores
-	if (directorio_principal == NULL) {
+	if (directorio == NULL) {
 		remove_proc_entry(nombre_directorio, directorio_padre);
 		printk(KERN_ALERT "Error: No se pudo crear el directorio /%s\n", nombre_directorio);
-		return -ENOMEM;
+		return NULL;
 	}
 
     printk(KERN_INFO "Creado el directorio /proc/%s \n", nombre_directorio);
-    return 0;
+    return directorio;
 }
 
 /**

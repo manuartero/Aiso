@@ -31,9 +31,9 @@ void modulo_clean(void);
 
 // funciones para crear-destruir estradas o directorios
 
-int crear_directorio(const char * nombre_directorio);
+struct proc_dir_entry * crear_directorio(const char * nombre_directorio);
 
-int crear_sub_directorio(const char * nombre_directorio, struct proc_dir_entry * directorio_padre);
+struct proc_dir_entry * crear_sub_directorio(const char * nombre_directorio, struct proc_dir_entry * directorio_padre);
 
 int crear_entrada(const char* nombre_entrada, struct proc_dir_entry *directorio, 
                   int (*leer) (char*, char**, off_t, int, int*, void*), 
