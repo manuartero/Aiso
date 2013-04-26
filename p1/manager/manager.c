@@ -8,6 +8,8 @@ module_exit(manager_clean);
 #define NOMBRE_DIRECTORIO_PRINCIPAL "aisoclip"
 
 struct proc_dir_entry * directorio_aisoclip;
+struct list_head lista_drivers;
+LIST_HEAD( lista_drivers );
 
 int manager_init(void)
 {
@@ -32,13 +34,13 @@ void manager_clean(void)
 
 int leer_activar(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
-    // TODO
+    // Sin efecto
     return 0;
 }
 
 int leer_desactivar(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
-    // TODO
+    // Sin efecto
     return 0;
 }
 
@@ -90,6 +92,47 @@ int escribir_desactivar(struct file *file, const char *buffer, unsigned long cou
 
 int escribir_monitor(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    // TODO
+    // Sin efecto
     return 0;
+}
+
+// funciones auxiliares
+
+int add_driver_lista(const char * nuevo_nombre)
+{
+    struct nodo_driver * elemento;
+    size_t length_nombre;
+
+    elemento = (struct nodo_driver *) vmalloc( sizeof(struct nodo_driver) );
+    //FIXME: revisar que esto funciona
+    length_nombre = strlen(nuevo_nombre);
+    strncpy(elemento->nombre, nuevo_nombre, length_nombre);  
+    list_add(&elemento->lista, &lista_drivers);
+
+    printk(KERN_INFO "nuevo nodo en la lista de drivers: %s\n", elemento->nombre);
+    return 0;
+}
+
+/**
+ * @return 0 si no borra ningun nodo 
+ * @return 1 si borra un nodo
+ */
+int rm_driver_lista(const char * nombre_nodo)
+{
+    struct list_head *pos, *q;
+    struct nodo_driver *tmp;
+    int borrado = 0;
+
+    list_for_each_safe(pos, q, &lista_drivers){
+        tmp = list_entry(pos, struct nodo_driver, lista);
+        if ( strcmp(tmp->nombre, nombre_nodo)==0 ) { 
+            vfree(tmp);
+            list_del(pos);            
+            printk("liberamos el nodo: %s\n", tmp->nombre);
+            borrado = 1;
+            break;
+        } 
+    }
+
+    return borrado;
 }

@@ -7,8 +7,15 @@
 #include <asm/uaccess.h>                /* function copy_from_user */
 #include <linux/moduleparam.h>          /* paso de parametros */
 #include <linux/kmod.h>                 /* user mode helper */
+#include <linux/list.h>                 /* list head */
+#include <linux/vmalloc.h>              /* vmalloc */
 #include "../utiles/utiles.h"           /* utiles */
 
+struct nodo_driver {
+    char* nombre;
+    struct list_head lista;
+};
+ 
 
 // funiones de carga/descarga del modulo
 int manager_init(void);
@@ -29,6 +36,10 @@ int escribir_desactivar(struct file *file, const char *buffer, unsigned long cou
 
 int escribir_monitor(struct file *file, const char *buffer, unsigned long count, void *data);
 
+// funciones auxiliares
+int add_driver_lista(const char * nuevo_nombre);
+
+int rm_driver_lista(const char* nombre_nodo);
 
 #endif /* MANAGER_H */
 
