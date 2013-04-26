@@ -7,7 +7,7 @@ module_exit(modulo_clean);
 
 /* Variables globales */ 
 struct proc_dir_entry * directorio_principal;
-char* nombre_directorio = "Sin nombre \n";
+char* nombre_directorio = "sin _nombre";
 /*
 struct proc_dir_entry * entrada_clipboard;
 struct proc_dir_entry * entrada_selector;

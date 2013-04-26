@@ -2,8 +2,8 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Antonio y Manu");
-module_init(modulo_p1_init);
-module_exit(modulo_p1_clean);
+//module_init(modulo_p1_init);
+//module_exit(modulo_p1_clean);
 
 struct proc_dir_entry * directorio_aisoclip;
 
