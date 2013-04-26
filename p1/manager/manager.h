@@ -1,0 +1,34 @@
+#ifndef MANAGER_H
+#define MANAGER_H
+
+#include <linux/module.h>	            /* modulo */
+#include <linux/kernel.h>	            /* kernel */
+#include <linux/proc_fs.h>	            /* struct proc_dir_entry */
+#include <asm/uaccess.h>                /* function copy_from_user */
+#include <linux/moduleparam.h>          /* paso de parametros */
+#include <linux/kmod.h>                 /* user mode helper */
+#include "../utiles/utiles.h"           /* utiles */
+
+
+// funiones de carga/descarga del modulo
+int manager_init(void);
+
+void manager_clean(void);
+
+// funciones de lectura
+int leer_activar(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+
+int leer_desactivar(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+
+int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+
+// funciones de escritura
+int escribir_activar(struct file *file, const char *buffer, unsigned long count, void *data);
+
+int escribir_desactivar(struct file *file, const char *buffer, unsigned long count, void *data);
+
+int escribir_monitor(struct file *file, const char *buffer, unsigned long count, void *data);
+
+
+#endif /* MANAGER_H */
+
