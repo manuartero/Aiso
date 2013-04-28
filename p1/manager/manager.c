@@ -30,6 +30,7 @@ void manager_clean(void)
     eliminar_sub_entrada("monitor", directorio_aisoclip);
     eliminar_sub_entrada("desactivar", directorio_aisoclip);
     eliminar_sub_entrada("activar", directorio_aisoclip);
+    eliminar_entrada("aisoclip");
 }
 
 int leer_activar(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
@@ -59,12 +60,12 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
  int escribir_activar(struct file *file, const char *buffer, unsigned long count, void *data)
 {
     //TODO: considerar que introduzco <nombre basura>
-    printk(KERN_INFO "COUNT:%lu", count);
+    
     int num_caracteres = 19 + count;
     char argumento_nombre[num_caracteres];
     char *nombre_introducido = vmalloc(count);    
     int error = 0;
-    
+    printk(KERN_INFO "COUNT:%lu", count);
     
     // 1) recoger el nombre del modulo    
     if ( copy_from_user(nombre_introducido, buffer, count) ) {
