@@ -45,7 +45,8 @@ MODULE_PARM_DESC(num_clipboards, "Numero de clipboards");
  */
 int modulo_init(void)
 {
-    int error = 0;    
+    int error = 0; 
+    printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", nombre_directorio);   
   
     directorio_principal = (struct proc_dir_entry *) crear_directorio(nombre_directorio);
     if (directorio_principal == NULL) {error = -1;}
