@@ -43,7 +43,8 @@ MODULE_PARM_DESC(num_clipboards, "Numero de clipboards");
  */
 int modulo_init(void)
 {
-    int error = 0;    
+    int error = 0; 
+    printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", nombre_directorio);   
   
     directorio_principal = (struct proc_dir_entry *) crear_directorio(nombre_directorio);
     if (directorio_principal == NULL) {error = -1;}
@@ -157,7 +158,6 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
     printk(KERN_INFO "leer_indice. Seleccionado: %d\n", elemento_actual);
    	caracteres_copiar = snprintf(mi_buff,11,"%d\n",elemento_actual);
 
-     printk(KERN_INFO "lo q tiene el bufer en 0 %s\n",mi_buff);
     /* determinar si hemos terminado de escribir */
     if (offset > 0) {
         terminado = 0;
