@@ -59,7 +59,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
 int escribir_activar(struct file *file, const char *buffer, unsigned long count, void *data)
 {
     struct subprocess_info * sub_info = NULL;
-    char *argv[] = { "/sbin/modprobe","clip.ko"}; 
+    char *argv[] = { "/sbin/modprobe","clip"}; 
     char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
     char *nombre = NULL; //TODO: considerar que introduzco <nombre parametro>
 
