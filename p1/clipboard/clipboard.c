@@ -8,6 +8,8 @@ module_exit(modulo_clean);
 /* Variables globales */ 
 struct proc_dir_entry * directorio_principal;
 char* nombre_directorio = "sin _nombre";
+extern int periodo;
+extern int activo;
 /*
 struct proc_dir_entry * entrada_clipboard;
 struct proc_dir_entry * entrada_selector;
@@ -22,7 +24,7 @@ LIST_HEAD( lista_clipboards );
 
 // kernel thread
 struct task_struct *clipkthread;
-int activo;
+
 
 // Asignar el numero de clipboards por parametro
 module_param(nombre_directorio, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -58,11 +60,13 @@ int modulo_init(void)
     }    
     
 	/* arrancamos el kernel thread */
-  	clipkthread = kthread_run(funcion_thread, NULL, "funcion_thread");
+  	clipkthread = kthread_run(funcion_thread, NULL, "clipkthread");
   	
   	if (clipkthread == (struct task_struct *) ERR_PTR) {
   		return -ENOMEM;
   	}
+  	
+  	periodo=0;
   	
     return 0;
 }
@@ -157,13 +161,11 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
     printk(KERN_INFO "leer_indice. Seleccionado: %d\n", elemento_actual);
    	caracteres_copiar = snprintf(mi_buff,11,"%d\n",elemento_actual);
 
-     printk(KERN_INFO "lo q tiene el bufer en 0 %s\n",mi_buff);
     /* determinar si hemos terminado de escribir */
     if (offset > 0) {
         terminado = 0;
     } else {
         /* copiar el elemento_actual en el buffer del sistema */ 
-        printk(KERN_INFO "entramos a copiar \n");
         memcpy(buffer, mi_buff, caracteres_copiar);
         terminado = caracteres_copiar;
     }
@@ -201,8 +203,23 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
 
 int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
-	// TODO
-	return 0;
+	int terminado;
+	char mi_buff[11];
+    int caracteres_copiar;
+    printk(KERN_INFO "leer_Periodo: %d\n", elemento_actual);
+   	caracteres_copiar = snprintf(mi_buff,11,"%d\n",elemento_actual);
+
+    /* determinar si hemos terminado de escribir */
+    if (offset > 0) {
+        terminado = 0;
+    } else {
+        /* copiar el elemento_actual en el buffer del sistema */ 
+        memcpy(buffer, mi_buff, caracteres_copiar);
+        terminado = caracteres_copiar;
+    }
+    
+    return terminado;
+
 }
 
 
@@ -242,6 +259,11 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
     
     printk(KERN_INFO "Elemento_actual = %d\n", elemento_actual);
     
+    //Despertamos al thread
+    if (periodo == 0){
+    wake_up_process(clipkthread);
+    }
+    
 	//el numeroq pongas en ese return si es menor q el numero de count entonces vulve a llamar a la funcion con lo q le queda
 	// return 4;  // tamaño de 1 byte 
     return count;
@@ -273,6 +295,11 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
         return -EFAULT;
     }
     
+  	//Despertamos al thread
+   	if (periodo == 0){
+   		 wake_up_process(clipkthread);
+   	}
+    
     printk(KERN_INFO "Salimos de escribir_clipboard\n");
     
     return seleccionado->num_elem;
@@ -280,7 +307,23 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
 
 int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-	// TODO
+	int nuevo_elemento = 0;
+    
+    /* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
+	if ((nuevo_elemento = mi_atoi(buffer))== -1)
+		return -EINVAL;
+
+    periodo = nuevo_elemento;
+    printk(KERN_INFO "Periodo = %d\n", elemento_actual);
+    
+    //Despertamos al thread
+    
+    wake_up_process(clipkthread);
+ 
+    
+	//el numeroq pongas en ese return si es menor q el numero de count entonces vulve a llamar a la funcion con lo q le queda
+	// return 4;  // tamaño de 1 byte 
+    return count;
 	return 0;
 }
 
@@ -294,7 +337,6 @@ struct clipstruct* encontrar_clipboard(void)
 {
     struct clipstruct *tmp = NULL;
     struct list_head *pos;
-    //boolean delante = true;
 
     list_for_each(pos, &lista_clipboards) {
         tmp = list_entry(pos, struct clipstruct, lista);
@@ -302,8 +344,7 @@ struct clipstruct* encontrar_clipboard(void)
         if (tmp->id == elemento_actual){
             break;        
         }
-      /*  if (tmp->id > elemento_actual)
-        	delante = false;*/
+     
     	}    
     	if (tmp->id!= elemento_actual)
     		return insertar_nuevo_clipboard();
