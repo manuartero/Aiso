@@ -41,5 +41,6 @@ int add_driver_lista(const char * nuevo_nombre);
 
 int rm_driver_lista(const char* nombre_nodo);
 
+int eliminar_lista(void);
 #endif /* MANAGER_H */
 

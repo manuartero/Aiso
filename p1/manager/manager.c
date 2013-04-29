@@ -27,6 +27,7 @@ int manager_init(void)
 
 void manager_clean(void)
 {
+	
     eliminar_sub_entrada("monitor", directorio_aisoclip);
     eliminar_sub_entrada("desactivar", directorio_aisoclip);
     eliminar_sub_entrada("activar", directorio_aisoclip);
@@ -72,6 +73,9 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
         return -EFAULT;
     }
     
+    nombre_introducido[count] = NULL;
+    add_driver_lista(nombre_introducido);
+    
     // 2) ejecutar modprobe
     strcpy(argumento_nombre, "nombre_directorio=");
    // strcat(argumento_nombre,NOMBRE_DIRECTORIO_PRINCIPAL);
@@ -90,8 +94,30 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
 
 int escribir_desactivar(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    // TODO
-    return 0;
+   
+    char *nombre_introducido = vmalloc(count);    
+    int error = 0;
+    printk(KERN_INFO "COUNT:%lu", count);
+    
+    // 1) recoger el nombre del modulo    
+    if ( copy_from_user(nombre_introducido, buffer, count) ) {
+        return -EFAULT;
+    }
+    
+    
+  	if ( rm_driver_lista(nombre_introducido)==0){
+		printk(KERN_INFO "no existe el clipboard %s\n",nombre_introducido);	
+   	}
+    
+    // porque no libera ni con rmmod ni con modprobe preguntar 
+    char *argv[] = { "/sbin/rmmod", nombre_introducido, NULL}; 
+    static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
+    //vfree(nombre_introducido); //FIXME
+    error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
+    
+    
+    
+    return count;
 }
 
 int escribir_monitor(struct file *file, const char *buffer, unsigned long count, void *data)
@@ -110,10 +136,31 @@ int add_driver_lista(const char * nuevo_nombre)
     elemento = (struct nodo_driver *) vmalloc( sizeof(struct nodo_driver) );
     //FIXME: revisar que esto funciona
     length_nombre = strlen(nuevo_nombre);
-    strncpy(elemento->nombre, nuevo_nombre, length_nombre);  
+    printk(KERN_INFO " longitud del nombre: %d\n", length_nombre);
+    elemento->nombre = (char *) vmalloc( sizeof(char)*(length_nombre+1) );
+    strncpy(elemento->nombre, nuevo_nombre, length_nombre); 
+    printk(KERN_INFO "lo que copiamos en el buffer%s\n", elemento->nombre);
+     
     list_add(&elemento->lista, &lista_drivers);
 
     printk(KERN_INFO "nuevo nodo en la lista de drivers: %s\n", elemento->nombre);
+    return 0;
+}
+
+
+int eliminar_lista(void)
+{
+    struct list_head *pos, *q;
+    struct nodo_driver *tmp;
+
+    list_for_each_safe(pos, q, &lista_drivers){
+        tmp = list_entry(pos, struct nodo_driver, lista);
+        printk("liberamos el nodo: %s |n ", tmp->nombre);
+        vfree(tmp->nombre);
+        vfree(tmp);
+        list_del(pos);            
+    }
+
     return 0;
 }
 
@@ -121,6 +168,7 @@ int add_driver_lista(const char * nuevo_nombre)
  * @return 0 si no borra ningun nodo 
  * @return 1 si borra un nodo
  */
+
 int rm_driver_lista(const char * nombre_nodo)
 {
     struct list_head *pos, *q;
@@ -129,13 +177,13 @@ int rm_driver_lista(const char * nombre_nodo)
 
     list_for_each_safe(pos, q, &lista_drivers){
         tmp = list_entry(pos, struct nodo_driver, lista);
-        if ( strcmp(tmp->nombre, nombre_nodo)==0 ) { 
-            vfree(tmp);
-            list_del(pos);            
+        if ( strcmp(tmp->nombre, nombre_nodo)==0 ) {
             printk("liberamos el nodo: %s\n", tmp->nombre);
+            vfree(tmp);
+            list_del(pos);
             borrado = 1;
             break;
-        } 
+        }
     }
 
     return borrado;
