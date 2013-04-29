@@ -30,7 +30,7 @@ void manager_clean(void)
     eliminar_sub_entrada("monitor", directorio_aisoclip);
     eliminar_sub_entrada("desactivar", directorio_aisoclip);
     eliminar_sub_entrada("activar", directorio_aisoclip);
-    eliminar_entrada("aisoclip");
+    eliminar_entrada(NOMBRE_DIRECTORIO_PRINCIPAL);
 }
 
 int leer_activar(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
@@ -74,6 +74,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     
     // 2) ejecutar modprobe
     strcpy(argumento_nombre, "nombre_directorio=");
+   // strcat(argumento_nombre,NOMBRE_DIRECTORIO_PRINCIPAL);
     strcat(argumento_nombre, nombre_introducido);
     printk(KERN_INFO "argumento_nombre contiene : %s", argumento_nombre);
     

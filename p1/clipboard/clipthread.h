@@ -3,6 +3,7 @@
 #include <linux/module.h>	/* modulo */
 #include <linux/kernel.h>	/* kernel */
 #include <linux/kthread.h>
+#include "clipstruct.h"
 
 
 

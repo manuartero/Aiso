@@ -46,9 +46,9 @@ int escribir_periodo(struct file *file, const char *buffer, unsigned long count,
 
 
 /* Funciones auxiliares */
-struct clipstruct* encontrar_clipboard(void);
+struct clipstruct* encontrar_clipboard(int id);
 
-struct clipstruct* insertar_nuevo_clipboard(void);
+struct clipstruct* insertar_nuevo_clipboard(int id);
 
 
 #endif /* CLIPBOARD_H */

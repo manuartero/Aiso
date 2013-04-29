@@ -2,6 +2,7 @@
 
 int activo;
 int periodo;
+struct clipstruct *nodo_actual;
 
 int funcion_thread(void *data) {
 
@@ -11,9 +12,7 @@ int funcion_thread(void *data) {
 	for(;;){
 		if (periodo==0){
 			set_current_state(TASK_INTERRUPTIBLE);
-			printk(KERN_INFO "entramos en el planificador\n");
 			schedule();
-			printk(KERN_INFO "salimos de dormir\n");
 		}
 		else{
 			msleep(10000);
@@ -28,7 +27,8 @@ int funcion_thread(void *data) {
 			activo = 0;
 			break;
 		}	
-		printk(KERN_INFO "las cosas");
+		printk(KERN_INFO "Estamos en el clipboard:%d\n",nodo_actual->id);
+		printk(KERN_INFO "El buffer contiene %d elementos\n",nodo_actual->num_elem);
 	}
 
 	printk(KERN_INFO "finalizando ejecucion kernel thread.\n");

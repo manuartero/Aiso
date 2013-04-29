@@ -56,7 +56,9 @@ int crear_entrada(const char * nombre_entrada, struct proc_dir_entry *directorio
 /** 
  *
  */
-inline void eliminar_entrada(char * entrada){ eliminar_sub_entrada(entrada, NULL); }
+inline void eliminar_entrada(char * entrada){ 
+	eliminar_sub_entrada(entrada, NULL); 
+}
 
 inline void eliminar_sub_entrada(char * entrada, struct proc_dir_entry * parent)
 {

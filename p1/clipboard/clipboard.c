@@ -7,7 +7,7 @@ module_exit(modulo_clean);
 
 /* Variables globales */ 
 struct proc_dir_entry * directorio_principal;
-char* nombre_directorio = "sin _nombre";
+char* nombre_directorio = "sin_nombre";
 extern int periodo;
 extern int activo;
 /*
@@ -17,7 +17,7 @@ struct proc_dir_entry * entrada_periodo;
 */
 struct list_head lista_clipboards;
 unsigned int num_clipboards = 5;
-unsigned int elemento_actual;
+extern struct clipstruct *nodo_actual;
 
 // inicializar la lista
 LIST_HEAD( lista_clipboards );
@@ -118,9 +118,8 @@ int crear_lista(void)
 
     printk(KERN_INFO "Creada la lista con un unico elemento\n");
     
-    /* elemento_actual apunta al primer elemento */
-    elemento_actual = 1;  
-
+    /* elemento_actual apunta al primer elemento */ 
+	nodo_actual = elemento;
     return 0;
 }
 
@@ -158,17 +157,17 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
 {
     int terminado;
 	char mi_buff[11];
-    int caracteres_copiar;
-    printk(KERN_INFO "leer_indice. Seleccionado: %d\n", elemento_actual);
-   	caracteres_copiar = snprintf(mi_buff,11,"%d\n",elemento_actual);
+    int id_clipboard;
+    printk(KERN_INFO "leer_indice. Seleccionado: %d\n", nodo_actual->id);
+   	id_clipboard = snprintf(mi_buff,11,"%d\n",nodo_actual->id);
 
     /* determinar si hemos terminado de escribir */
     if (offset > 0) {
         terminado = 0;
     } else {
         /* copiar el elemento_actual en el buffer del sistema */ 
-        memcpy(buffer, mi_buff, caracteres_copiar);
-        terminado = caracteres_copiar;
+        memcpy(buffer, mi_buff, id_clipboard);
+        terminado = id_clipboard;
     }
     
     return terminado;
@@ -184,8 +183,7 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
 int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
     int terminado;
-    struct clipstruct *seleccionado = NULL;
-    printk(KERN_INFO "leer_clipboard. Seleccionado: %d\n", elemento_actual);
+    printk(KERN_INFO "leer_clipboard. Seleccionado: %d\n", nodo_actual->id);
     
     /* determinar si hemos terminado de escribir */
     /*preguntar porque entra dos veces en el offset*/
@@ -194,9 +192,9 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
         terminado = 0;
     } else {
         /* copiar el contendido del buffer del clipboard en el buffer del sistema */   
-        seleccionado = encontrar_clipboard();    
-        memcpy(buffer, seleccionado->buffer, seleccionado->num_elem);
-        terminado = seleccionado->num_elem;
+        
+        memcpy(buffer, nodo_actual->buffer, nodo_actual->num_elem);
+        terminado = nodo_actual->num_elem;
     }
     
     return terminado;
@@ -207,8 +205,8 @@ int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_
 	int terminado;
 	char mi_buff[11];
     int caracteres_copiar;
-    printk(KERN_INFO "leer_Periodo: %d\n", elemento_actual);
-   	caracteres_copiar = snprintf(mi_buff,11,"%d\n",elemento_actual);
+    printk(KERN_INFO "leer_Periodo: %d\n", periodo);
+   	caracteres_copiar = snprintf(mi_buff,11,"%d\n",periodo);
 
     /* determinar si hemos terminado de escribir */
     if (offset > 0) {
@@ -256,9 +254,10 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
     	return -EINVAL;
     }
   
-    elemento_actual = nuevo_elemento;
+  	/* encontrar el buffer en el que vamos a escribir */
+    nodo_actual = encontrar_clipboard(nuevo_elemento);
     
-    printk(KERN_INFO "Elemento_actual = %d\n", elemento_actual);
+    printk(KERN_INFO "Elemento_actual = %d\n", nodo_actual->id);
     
     //Despertamos al thread
     if (periodo == 0){
@@ -279,20 +278,17 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
  */
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    struct clipstruct *seleccionado;
-    printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", elemento_actual);
     
-    /* encontrar el buffer en el que vamos a escribir */
-    seleccionado = encontrar_clipboard();
-    printk(KERN_INFO "Encontrado la entrada con id: %d\n", seleccionado->id);
+    printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", nodo_actual->id);
+    
     
     /* copiar en el buffer seleccionado <= buffer */
-    seleccionado->num_elem = count;
-    if (seleccionado->num_elem > TAM_MAX_BUFFER) {
-        seleccionado->num_elem = TAM_MAX_BUFFER;
+    nodo_actual->num_elem = count;
+    if (nodo_actual->num_elem > TAM_MAX_BUFFER) {
+        nodo_actual->num_elem = TAM_MAX_BUFFER;
     }
 
-    if ( copy_from_user(seleccionado->buffer, buffer, seleccionado->num_elem) ) {
+    if ( copy_from_user(nodo_actual->buffer, buffer, nodo_actual->num_elem) ) {
         return -EFAULT;
     }
     
@@ -303,7 +299,7 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
     
     printk(KERN_INFO "Salimos de escribir_clipboard\n");
     
-    return seleccionado->num_elem;
+    return nodo_actual->num_elem;
 }
 
 int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data)
@@ -315,7 +311,7 @@ int escribir_periodo(struct file *file, const char *buffer, unsigned long count,
 		return -EINVAL;
 
     periodo = nuevo_elemento;
-    printk(KERN_INFO "Periodo = %d\n", elemento_actual);
+    printk(KERN_INFO "Periodo = %d\n",nuevo_elemento);
     
     //Despertamos al thread
     
@@ -334,7 +330,7 @@ int escribir_periodo(struct file *file, const char *buffer, unsigned long count,
 // ------------------------------------
 
 
-struct clipstruct* encontrar_clipboard(void)
+struct clipstruct* encontrar_clipboard(int id)
 {
     struct clipstruct *tmp = NULL;
     struct list_head *pos;
@@ -342,22 +338,22 @@ struct clipstruct* encontrar_clipboard(void)
     list_for_each(pos, &lista_clipboards) {
         tmp = list_entry(pos, struct clipstruct, lista);
         printk(KERN_INFO "id= %d\n", tmp->id);
-        if (tmp->id == elemento_actual){
+        if (tmp->id == id){
             break;        
         }
      
     	}    
-    	if (tmp->id!= elemento_actual)
-    		return insertar_nuevo_clipboard();
+    	if (tmp->id!= id)
+    		return insertar_nuevo_clipboard(id);
     		
     return tmp;
 }
 
-struct clipstruct* insertar_nuevo_clipboard(void)
+struct clipstruct* insertar_nuevo_clipboard(int id)
 {
 	struct clipstruct *elemento;
     elemento = (struct clipstruct *) vmalloc( sizeof(struct clipstruct) );
-    elemento->id = elemento_actual;
+    elemento->id = id;
     elemento->num_elem = 0;
     elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
     list_add(&elemento->lista, &lista_clipboards);
