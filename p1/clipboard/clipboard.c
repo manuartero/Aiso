@@ -10,11 +10,6 @@ struct proc_dir_entry * directorio_principal;
 char* nombre_directorio = "sin_nombre";
 extern int periodo;
 extern int activo;
-/*
-struct proc_dir_entry * entrada_clipboard;
-struct proc_dir_entry * entrada_selector;
-struct proc_dir_entry * entrada_periodo;
-*/
 struct list_head lista_clipboards;
 unsigned int num_clipboards = 5;
 extern struct clipstruct *nodo_actual;
@@ -261,17 +256,14 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
     
     //Despertamos al thread
     if (periodo == 0){
-    wake_up_process(clipkthread);
+        wake_up_process(clipkthread);
     }
-    
-	//el numeroq pongas en ese return si es menor q el numero de count entonces vulve a llamar a la funcion con lo q le queda
-	// return 4;  // tamaño de 1 byte 
+
     return count;
 }
 
 /**
- * Funcion que se llama cuando escribimos en /proc : "echo"
- *
+ * Funcion que se llama cuando escribimos en /proc/clip/clipboard 
  * @param buffer del sistema cadena de entrada
  * @param count numero de caracteres a copiar
  * @return caracteres copiados
@@ -313,15 +305,10 @@ int escribir_periodo(struct file *file, const char *buffer, unsigned long count,
     periodo = nuevo_elemento;
     printk(KERN_INFO "Periodo = %d\n",nuevo_elemento);
     
-    //Despertamos al thread
-    
+    //Despertamos al thread   
     wake_up_process(clipkthread);
  
-    
-	//el numeroq pongas en ese return si es menor q el numero de count entonces vulve a llamar a la funcion con lo q le queda
-	// return 4;  // tamaño de 1 byte 
-    return count;
-	return 0;
+	return count;
 }
 
 
@@ -329,7 +316,13 @@ int escribir_periodo(struct file *file, const char *buffer, unsigned long count,
 // funciones auxiliares
 // ------------------------------------
 
-
+/** 
+ * Busca en la lista un elemento que contenga ese id 
+ * Si no lo encuentra lo creara. Las restricciones de numero de 
+ * clipboards deberan hacerse antes de llamar a esta funcion 
+ * @param (int) id de clipboard que queremos buscar
+ * @return (struct clipstruct *) nodo encontrado
+ */
 struct clipstruct* encontrar_clipboard(int id)
 {
     struct clipstruct *tmp = NULL;
@@ -340,12 +333,13 @@ struct clipstruct* encontrar_clipboard(int id)
         printk(KERN_INFO "id= %d\n", tmp->id);
         if (tmp->id == id){
             break;        
-        }
-     
-    	}    
-    	if (tmp->id!= id)
-    		return insertar_nuevo_clipboard(id);
-    		
+        } 
+    }    
+    
+    if (tmp->id!= id) {
+        return insertar_nuevo_clipboard(id);
+    }
+    
     return tmp;
 }
 

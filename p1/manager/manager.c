@@ -64,7 +64,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     
     int num_caracteres = 19 + count;
     char argumento_nombre[num_caracteres];
-    char *nombre_introducido = vmalloc(count);    
+    char *nombre_introducido = (char *) vmalloc(count);    
     int error = 0;
     printk(KERN_INFO "COUNT:%lu", count);
     
@@ -87,7 +87,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     //vfree(nombre_introducido); //FIXME
     error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
     
-    
+    printk (KERN_INFO "emdwedimwed\n\n" );
     
     return count;
 } 
@@ -134,7 +134,6 @@ int add_driver_lista(const char * nuevo_nombre)
     size_t length_nombre;
 
     elemento = (struct nodo_driver *) vmalloc( sizeof(struct nodo_driver) );
-    //FIXME: revisar que esto funciona
     length_nombre = strlen(nuevo_nombre);
     printk(KERN_INFO " longitud del nombre: %d\n", length_nombre);
     elemento->nombre = (char *) vmalloc( sizeof(char)*(length_nombre+1) );
