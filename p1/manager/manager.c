@@ -10,6 +10,7 @@ module_exit(manager_clean);
 struct proc_dir_entry * directorio_aisoclip;
 struct list_head lista_drivers;
 LIST_HEAD( lista_drivers );
+int numero_drivers = 0;
 
 int manager_init(void)
 {
@@ -34,22 +35,47 @@ void manager_clean(void)
     eliminar_entrada(NOMBRE_DIRECTORIO_PRINCIPAL);
 }
 
+/** sin efecto */
 int leer_activar(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
-    // Sin efecto
     return 0;
 }
 
+/** sin efecto */
 int leer_desactivar(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
-    // Sin efecto
     return 0;
 }
 
+/**
+ * Mostrar los nombres de los clips cargados
+ */
 int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
-    // TODO
-    return 0;
+    struct nodo_driver *tmp = NULL;
+    struct list_head *pos;
+    int terminado;
+    int caracteres_copiar = 0; // XXX
+    int i = 0;
+    char * nombres_drivers[numero_drivers];
+    
+    // recorrer la lista: rellenar nombres_drivers 
+    list_for_each(pos, &lista_drivers) {
+        tmp = list_entry(pos, struct nodo_driver, lista);
+        nombres_drivers[i] = (char*) tmp->nombre;
+        i++; 
+    }    
+    
+    // determinar si hemos terminado de escribir
+    if (offset > 0) {
+        terminado = 0;
+    } else {
+        /* copiar el elemento_actual en el buffer del sistema */ 
+        memcpy(buffer, nombres_drivers, caracteres_copiar);
+        terminado = caracteres_copiar;
+    }
+    
+    return terminado;
 }
 
 /**
@@ -57,65 +83,69 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
  * La funcion llamara al programa <modprobe> para instalar el modulo <clip> con el nombre especificado
  * El modulo <clip> tendra que estar en la carpeta /lib/modules/2.6.32-21-generic
  * (ejecutar el comando $> depmod -a)
+ * TODO: considerar que introduzco <nombre basura> 
  */
  int escribir_activar(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    //TODO: considerar que introduzco <nombre basura>
-    
     int num_caracteres = 19 + count;
     char argumento_nombre[num_caracteres];
-    char *nombre_introducido = (char *) vmalloc(count);    
+    char *nombre_introducido= NULL;    
     int error = 0;
-    printk(KERN_INFO "COUNT:%lu", count);
+    char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, "clip", argumento_nombre, NULL}; 
+    static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
+    
+    nombre_introducido = (char *) vmalloc(count);
     
     // 1) recoger el nombre del modulo    
     if ( copy_from_user(nombre_introducido, buffer, count) ) {
         return -EFAULT;
     }
     
-    nombre_introducido[count] = NULL;
-    add_driver_lista(nombre_introducido);
+    argv[2]=nombre_introducido;
+    
+    // XXX
+    //nombre_introducido[count] = NULL;
+    //add_driver_lista(nombre_introducido);
     
     // 2) ejecutar modprobe
     strcpy(argumento_nombre, "nombre_directorio=");
-   // strcat(argumento_nombre,NOMBRE_DIRECTORIO_PRINCIPAL);
     strcat(argumento_nombre, nombre_introducido);
-    printk(KERN_INFO "argumento_nombre contiene : %s", argumento_nombre);
     
-    char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, "clip", argumento_nombre, NULL}; 
-    static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
-    //vfree(nombre_introducido); //FIXME
+    
     error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
+    if(error){
+        return -1;
+    } 
     
-    printk (KERN_INFO "emdwedimwed\n\n" );
-    
+    numero_drivers++;
     return count;
 } 
 
+/**
+ * Eliminar el clip seleccionado
+ */
 int escribir_desactivar(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-   
     char *nombre_introducido = vmalloc(count);    
     int error = 0;
-    printk(KERN_INFO "COUNT:%lu", count);
+    int encontrado;
+    char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, "clip", NULL}; 
+    static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
     
     // 1) recoger el nombre del modulo    
     if ( copy_from_user(nombre_introducido, buffer, count) ) {
         return -EFAULT;
     }
     
-    
-  	if ( rm_driver_lista(nombre_introducido)==0){
+    encontrado = rm_driver_lista(nombre_introducido); 
+  	if (!encontrado){
 		printk(KERN_INFO "no existe el clipboard %s\n",nombre_introducido);	
    	}
     
-    // porque no libera ni con rmmod ni con modprobe preguntar 
-    char *argv[] = { "/sbin/rmmod", nombre_introducido, NULL}; 
-    static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
-    //vfree(nombre_introducido); //FIXME
     error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
-    
-    
+    if (error){
+        return -1;
+    }
     
     return count;
 }
@@ -135,10 +165,8 @@ int add_driver_lista(const char * nuevo_nombre)
 
     elemento = (struct nodo_driver *) vmalloc( sizeof(struct nodo_driver) );
     length_nombre = strlen(nuevo_nombre);
-    printk(KERN_INFO " longitud del nombre: %d\n", length_nombre);
     elemento->nombre = (char *) vmalloc( sizeof(char)*(length_nombre+1) );
     strncpy(elemento->nombre, nuevo_nombre, length_nombre); 
-    printk(KERN_INFO "lo que copiamos en el buffer%s\n", elemento->nombre);
      
     list_add(&elemento->lista, &lista_drivers);
 
