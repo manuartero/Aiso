@@ -37,7 +37,7 @@ int escribir_desactivar(struct file *file, const char *buffer, unsigned long cou
 int escribir_monitor(struct file *file, const char *buffer, unsigned long count, void *data);
 
 // funciones auxiliares
-int add_driver_lista(const char * nuevo_nombre);
+int add_driver_lista(const char * nuevo_nombre, unsigned long count);
 
 int rm_driver_lista(const char* nombre_nodo);
 

@@ -54,25 +54,27 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
 {
     struct nodo_driver *tmp = NULL;
     struct list_head *pos;
-    int terminado;
+    int terminado=0;
     int caracteres_copiar = 0; // XXX
     int i = 0;
+    size_t longitud;
     char * nombres_drivers[numero_drivers];
     
     // recorrer la lista: rellenar nombres_drivers 
-    list_for_each(pos, &lista_drivers) {
-        tmp = list_entry(pos, struct nodo_driver, lista);
-        nombres_drivers[i] = (char*) tmp->nombre;
-        i++; 
-    }    
+    
     
     // determinar si hemos terminado de escribir
     if (offset > 0) {
         terminado = 0;
     } else {
-        /* copiar el elemento_actual en el buffer del sistema */ 
-        memcpy(buffer, nombres_drivers, caracteres_copiar);
-        terminado = caracteres_copiar;
+        // copiar el elemento_actual en el buffer del sistema 
+        list_for_each(pos, &lista_drivers) {
+        tmp = list_entry(pos, struct nodo_driver, lista);
+      	longitud =strlen(tmp->nombre);
+      	printk(KERN_INFO "tamaño de la cosa %zu\n",longitud);
+        memcpy(buffer, tmp->nombre, longitud);
+        terminado = terminado+longitud;
+        }
     }
     
     return terminado;
@@ -103,9 +105,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     
     argv[2]=nombre_introducido;
     
-    // XXX
-    //nombre_introducido[count] = NULL;
-    //add_driver_lista(nombre_introducido);
+    add_driver_lista(nombre_introducido,count);
     
     // 2) ejecutar modprobe
     strcpy(argumento_nombre, "nombre_directorio=");
@@ -158,19 +158,16 @@ int escribir_monitor(struct file *file, const char *buffer, unsigned long count,
 
 // funciones auxiliares
 
-int add_driver_lista(const char * nuevo_nombre)
+int add_driver_lista(const char * nuevo_nombre, unsigned long count)
 {
     struct nodo_driver * elemento;
-    size_t length_nombre;
-
+   
     elemento = (struct nodo_driver *) vmalloc( sizeof(struct nodo_driver) );
-    length_nombre = strlen(nuevo_nombre);
-    elemento->nombre = (char *) vmalloc( sizeof(char)*(length_nombre+1) );
-    strncpy(elemento->nombre, nuevo_nombre, length_nombre); 
+    elemento->nombre = (char *) vmalloc( sizeof(char)*(count) );
+    strncpy(elemento->nombre, nuevo_nombre,count); 
      
     list_add(&elemento->lista, &lista_drivers);
 
-    printk(KERN_INFO "nuevo nodo en la lista de drivers: %s\n", elemento->nombre);
     return 0;
 }
 
