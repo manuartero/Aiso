@@ -68,6 +68,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
         terminado = 0;
     } else {
         // copiar el elemento_actual en el buffer del sistema 
+        //FIXME
         list_for_each(pos, &lista_drivers) {
         tmp = list_entry(pos, struct nodo_driver, lista);
       	longitud =strlen(tmp->nombre);
