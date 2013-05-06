@@ -10,8 +10,6 @@
 #include <linux/list.h>                 /* list head */
 #include <linux/vmalloc.h>              /* vmalloc */
 #include "../utiles/utiles.h"           /* utiles */
-#include "directorio.h"
-
 
 struct nodo_driver {
     char* nombre;

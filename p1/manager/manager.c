@@ -15,13 +15,13 @@ int numero_drivers = 0;
 int manager_init(void)
 {
     int error = 0;
-
-    error = crear_directorio_aiso(NOMBRE_DIRECTORIO_PRINCIPAL);
-    //if(directorio_aisoclip == NULL){error = -1;}
     
-    error = crear_entrada("activar", directorio_aisoclip, leer_activar, escribir_activar);
-    error = crear_entrada("desactivar", directorio_aisoclip, leer_desactivar, escribir_desactivar);
-    error = crear_entrada("monitor", directorio_aisoclip, leer_monitor, escribir_monitor);
+    directorio_aisoclip = crear_directorio(NOMBRE_DIRECTORIO_PRINCIPAL);
+    printk("Despues de crear directorio_aisoclip = %p", (struct proc_dir_entry *) directorio_aisoclip);
+
+    error |= crear_entrada("activar", directorio_aisoclip, leer_activar, escribir_activar);
+    error |= crear_entrada("desactivar", directorio_aisoclip, leer_desactivar, escribir_desactivar);
+    error |= crear_entrada("monitor", directorio_aisoclip, leer_monitor, escribir_monitor);
 
     return error;
 }

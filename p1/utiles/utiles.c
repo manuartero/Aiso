@@ -1,5 +1,10 @@
 #include "utiles.h"
 
+/**
+ * DIRECTORIO PRINCIPAL : COMPARTIDO POR CLIP Y MANAGER
+ */
+struct proc_dir_entry * directorio_aisoclip;
+
 // -------------------------------------------------
 // Funciones para crear - destruir entradas en /proc
 // -------------------------------------------------
@@ -8,7 +13,8 @@
  * Crea el directorio especificado que colgara de /proc
  * @return (struct proc_dir_entry *)
  */
-struct proc_dir_entry * crear_directorio(const char* nombre_directorio){
+struct proc_dir_entry * crear_directorio(const char* nombre_directorio)
+{
 	return crear_sub_directorio(nombre_directorio, NULL);
 }
 
@@ -20,7 +26,7 @@ struct proc_dir_entry * crear_sub_directorio(const char* nombre_directorio, stru
 	struct proc_dir_entry * directorio;
 	
 	if (directorio_padre== NULL)
-		printk(KERN_INFO "el direcotiro padre es null\n");
+		printk(KERN_INFO "el directorio padre es null para el dir %s\n", nombre_directorio);
    	 directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
     
     // comprobacion de errores
@@ -55,7 +61,6 @@ int crear_entrada(const char * nombre_entrada, struct proc_dir_entry *directorio
     nueva_entrada->uid = 0; // id usuario 
     nueva_entrada->gid = 0; // id grupo
    
-    printk(KERN_INFO "Creada la entrada /%s \n", nombre_entrada);
     return 0;
 }
 

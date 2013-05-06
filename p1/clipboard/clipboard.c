@@ -7,7 +7,7 @@ module_exit(modulo_clean);
 
 /* Variables globales */ 
 struct proc_dir_entry * directorio_principal;
-extern struct proc_dir_entry *directorio_aisoclip;
+extern struct proc_dir_entry * directorio_aisoclip;
 char* nombre_directorio = "sin_nombre";
 extern int periodo;
 extern int activo;
@@ -43,15 +43,18 @@ int modulo_init(void)
 {
     int error = 0; 
     printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", nombre_directorio);   
-  
+    printk("\ndirectorio_aisoclip = %p", (struct proc_dir_entry *) directorio_aisoclip);
+
     //directorio_principal = (struct proc_dir_entry *) crear_directorio(nombre_directorio);
     //if (directorio_principal == NULL) {error = -1;}
- 	directorio_principal = crear_sub_directorio(nombre_directorio,directorio_aisoclip);
+    
+ 	directorio_principal = crear_sub_directorio(nombre_directorio, directorio_aisoclip);
+ 	
  	if (directorio_principal == NULL) {error = -1;}
-    error = crear_lista(); 
-    error = crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
-    error = crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
-    error = crear_entrada(nombre_periodo, directorio_principal, leer_periodo, escribir_periodo);
+    error |= crear_lista(); 
+    error |= crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
+    error |= crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
+    error |= crear_entrada(nombre_periodo, directorio_principal, leer_periodo, escribir_periodo);
     
     if (error != 0) {
     	printk(KERN_INFO "error\n");
