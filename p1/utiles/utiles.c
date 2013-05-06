@@ -8,14 +8,20 @@
  * Crea el directorio especificado que colgara de /proc
  * @return (struct proc_dir_entry *)
  */
-struct proc_dir_entry * crear_directorio(const char* nombre_directorio){return crear_sub_directorio(nombre_directorio, NULL);}
+struct proc_dir_entry * crear_directorio(const char* nombre_directorio){
+	return crear_sub_directorio(nombre_directorio, NULL);
+}
 
 /**
  *
 */
 struct proc_dir_entry * crear_sub_directorio(const char* nombre_directorio, struct proc_dir_entry * directorio_padre)
 {
-    struct proc_dir_entry * directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
+	struct proc_dir_entry * directorio;
+	
+	if (directorio_padre== NULL)
+		printk(KERN_INFO "el direcotiro padre es null\n");
+   	 directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
     
     // comprobacion de errores
 	if (directorio == NULL) {

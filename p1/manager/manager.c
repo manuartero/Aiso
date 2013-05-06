@@ -7,7 +7,7 @@ module_exit(manager_clean);
 
 #define NOMBRE_DIRECTORIO_PRINCIPAL "aisoclip"
 
-struct proc_dir_entry * directorio_aisoclip;
+extern struct proc_dir_entry * directorio_aisoclip;
 struct list_head lista_drivers;
 LIST_HEAD( lista_drivers );
 int numero_drivers = 0;
@@ -16,8 +16,8 @@ int manager_init(void)
 {
     int error = 0;
 
-    directorio_aisoclip = crear_directorio(NOMBRE_DIRECTORIO_PRINCIPAL);
-    if(directorio_aisoclip == NULL){error = -1;}
+    error = crear_directorio_aiso(NOMBRE_DIRECTORIO_PRINCIPAL);
+    //if(directorio_aisoclip == NULL){error = -1;}
     
     error = crear_entrada("activar", directorio_aisoclip, leer_activar, escribir_activar);
     error = crear_entrada("desactivar", directorio_aisoclip, leer_desactivar, escribir_desactivar);
@@ -55,10 +55,8 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     struct nodo_driver *tmp = NULL;
     struct list_head *pos;
     int terminado=0;
-    int caracteres_copiar = 0; // XXX
-    int i = 0;
-    size_t longitud;
-    char * nombres_drivers[numero_drivers];
+    size_t longitud=0;
+    char * nombres_drivers= vmalloc(4096);
     
     // recorrer la lista: rellenar nombres_drivers 
     
@@ -72,10 +70,16 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
         list_for_each(pos, &lista_drivers) {
         tmp = list_entry(pos, struct nodo_driver, lista);
       	longitud =strlen(tmp->nombre);
-      	printk(KERN_INFO "tamaño de la cosa %zu\n",longitud);
-        memcpy(buffer, tmp->nombre, longitud);
-        terminado = terminado+longitud;
+      	terminado = terminado+longitud;
+      	strcat(nombres_drivers,tmp->nombre);
+      	//salto de linea
+      	nombres_drivers[terminado]=10;
+      	terminado++;
+      	//zu es para size_t
+      	//printk(KERN_INFO "tamaño de la cosa %zu\n",longitud);
+      	//printk(KERN_INFO "%s\n",nombres_drivers);
         }
+        memcpy(buffer,nombres_drivers, terminado);
     }
     
     return terminado;

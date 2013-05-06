@@ -11,6 +11,7 @@
 #include "clipstruct.h"             /* struct clipstruct */
 #include "../utiles/utiles.h"       /* funciones utiles */
 #include "clipthread.h"             /* definicion del thread */
+#include "../manager/directorio.h"
 
 /* Declaracion de macros */
 #define nombre_clipboard "clipboard"
