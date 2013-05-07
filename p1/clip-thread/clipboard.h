@@ -8,8 +8,8 @@
 #include <linux/vmalloc.h>          /* funcion vmalloc */
 #include <asm/uaccess.h>            /* function copy_from_user */
 #include <linux/moduleparam.h>      /* paso de parametros */
-#include "clipstruct.h"             /* struct clipstruct */
 #include "../utiles/utiles.h"       /* funciones utiles */
+#include "clipstruct.h"             /* struct clipstruct */
 #include "clipthread.h"             /* definicion del thread */
 
 /* Declaracion de macros */

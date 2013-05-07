@@ -11,6 +11,8 @@
 #include <linux/vmalloc.h>              /* vmalloc */
 #include "../utiles/utiles.h"           /* utiles */
 
+#define NOMBRE_DIRECTORIO_PRINCIPAL "aisoclip"
+
 struct nodo_driver {
     char* nombre;
     struct list_head lista;
@@ -42,5 +44,6 @@ int add_driver_lista(const char * nuevo_nombre, unsigned long count);
 int rm_driver_lista(const char* nombre_nodo);
 
 int eliminar_lista(void);
+
 #endif /* MANAGER_H */
 

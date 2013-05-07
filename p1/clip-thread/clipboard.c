@@ -21,7 +21,6 @@ LIST_HEAD( lista_clipboards );
 // kernel thread
 struct task_struct *clipkthread;
 
-
 // Asignar el numero de clipboards por parametro
 module_param(nombre_directorio, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 MODULE_PARM_DESC(nombre_directorio, "Nombre del clipboard");

@@ -8,17 +8,20 @@
 #include <linux/vmalloc.h>          /* funcion vmalloc */
 #include <asm/uaccess.h>            /* function copy_from_user */
 #include <linux/moduleparam.h>      /* paso de parametros */
-#include "clipstruct.h"             /* struct clipstruct */
 #include "../utiles/utiles.h"       /* funciones utiles */
-#include "clipthread.h"             /* definicion del thread */
 
 /* Declaracion de macros */
 #define nombre_clipboard "clipboard"
 #define nombre_selector "selection"
 #define nombre_periodo "periodo"
-#define CAMBIO_CLIPBOARD 4
-#define ESCRITURA_CLIPBOARD 5
 #define TAM_MAX_BUFFER 4096
+
+struct clipstruct {
+    unsigned int id;
+    unsigned int num_elem;
+    char* buffer;
+    struct list_head lista;
+};
 
 /* Funciones de carga/descagar del modulo */
 int modulo_init(void);
@@ -36,13 +39,9 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
 
 int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
 
-int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
-
 int escribir_indice(struct file *file, const char *buffer, unsigned long count, void *data);
 
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data);
-
-int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data);
 
 
 /* Funciones auxiliares */

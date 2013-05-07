@@ -5,8 +5,6 @@ MODULE_AUTHOR("Antonio y Manu");
 module_init(manager_init);
 module_exit(manager_clean);
 
-#define NOMBRE_DIRECTORIO_PRINCIPAL "aisoclip"
-
 extern struct proc_dir_entry * directorio_aisoclip;
 struct list_head lista_drivers;
 LIST_HEAD( lista_drivers );

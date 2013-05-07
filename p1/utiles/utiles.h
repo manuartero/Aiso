@@ -4,7 +4,6 @@
 #include <linux/kernel.h>	/* kernel */
 #include <linux/module.h>	/* modulo */
 #include <linux/proc_fs.h>	/* struct proc_dir_entry */
-#include "workqueue.h"      /* workqueue */
 
 // Boolean
 typedef int boolean;

@@ -1,11 +1,12 @@
- #ifndef CLIPSTRUCT_H
- #define CLIPSTRUCT_H
+#ifndef CLIPSTRUCT_H
+#define CLIPSTRUCT_H
 
 #include <linux/list.h>
 
+/* Definicion de struct clipstruct */
 struct clipstruct {
     unsigned int id;
-    unsigned int num_elem; // numero de elementos que tiene el buffer en ese momento
+    unsigned int num_elem;
     char* buffer;
     struct list_head lista;
 };

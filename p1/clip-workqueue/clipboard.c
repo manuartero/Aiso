@@ -8,20 +8,15 @@ module_exit(modulo_clean);
 /* Variables globales */ 
 struct proc_dir_entry * directorio_principal;
 extern struct proc_dir_entry * directorio_aisoclip;
-extern struct workqueue_struct * workqueue;
+struct workqueue_struct * workqueue;
 char* nombre_directorio = "sin_nombre";
-extern int periodo;
 extern int activo;
 struct list_head lista_clipboards;
 unsigned int num_clipboards = 5;
-extern struct clipstruct *nodo_actual;
+struct clipstruct * nodo_actual;
 
 // inicializar la lista
 LIST_HEAD( lista_clipboards );
-
-// kernel thread
-struct task_struct *clipkthread;
-
 
 // Asignar el numero de clipboards por parametro
 module_param(nombre_directorio, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -52,7 +47,6 @@ int modulo_init(void)
     error |= crear_lista(); 
     error |= crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
     error |= crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
-    error |= crear_entrada(nombre_periodo, directorio_principal, leer_periodo, escribir_periodo);
     
     if (error != 0) {
     	printk(KERN_INFO "error\n");
@@ -187,28 +181,6 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
     return terminado;
 }
 
-int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
-{
-	int terminado;
-	char mi_buff[11];
-    int caracteres_copiar;
-    printk(KERN_INFO "leer_Periodo: %d\n", periodo);
-   	caracteres_copiar = snprintf(mi_buff,11,"%d\n",periodo);
-
-    /* determinar si hemos terminado de escribir */
-    if (offset > 0) {
-        terminado = 0;
-    } else {
-        /* copiar el elemento_actual en el buffer del sistema */ 
-        memcpy(buffer, mi_buff, caracteres_copiar);
-        terminado = caracteres_copiar;
-    }
-    
-    return terminado;
-
-}
-
-
 /**
  * En buffer se almacena la entrada del usuario seguido de un salto de linea
  * Ejemplo: 34 => [3|4|\n|········]
@@ -243,13 +215,6 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
   
   	/* encontrar el buffer en el que vamos a escribir */
     nodo_actual = encontrar_clipboard(nuevo_elemento);
-    
-    printk(KERN_INFO "Elemento_actual = %d\n", nodo_actual->id);
-    
-    //Despertamos al thread
-    if (periodo == 0){
-        wake_up_process(clipkthread);
-    }
 
     return count;
 }
@@ -261,12 +226,8 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
  * @return caracteres copiados
  */
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
-{
-    
-    printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", nodo_actual->id);
-    
-    
-    /* copiar en el buffer seleccionado <= buffer */
+{   
+    // copiar en el buffer seleccionado <= buffer
     nodo_actual->num_elem = count;
     if (nodo_actual->num_elem > TAM_MAX_BUFFER) {
         nodo_actual->num_elem = TAM_MAX_BUFFER;
@@ -276,33 +237,8 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
         return -EFAULT;
     }
     
-  	//Despertamos al thread
-   	if (periodo == 0){
-   		 wake_up_process(clipkthread);
-   	}
-    
-    printk(KERN_INFO "Salimos de escribir_clipboard\n");
-    
     return nodo_actual->num_elem;
 }
-
-int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data)
-{
-	int nuevo_elemento = 0;
-    
-    /* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
-	if ((nuevo_elemento = mi_atoi(buffer))== -1)
-		return -EINVAL;
-
-    periodo = nuevo_elemento;
-    printk(KERN_INFO "Periodo = %d\n",nuevo_elemento);
-    
-    //Despertamos al thread   
-    wake_up_process(clipkthread);
- 
-	return count;
-}
-
 
 // ------------------------------------
 // funciones auxiliares
