@@ -1,9 +1,9 @@
 #include "utiles.h"
 
-/**
- * DIRECTORIO PRINCIPAL : COMPARTIDO POR CLIP Y MANAGER
- */
+/** DIRECTORIO PRINCIPAL : COMPARTIDO POR CLIP Y MANAGER */
 struct proc_dir_entry * directorio_aisoclip;
+/** WORKQUEUE : COMPARTIDO POR CLIP-WORKQUEUE Y UTILES */
+struct workqueue_struct * workqueue;
 
 // -------------------------------------------------
 // Funciones para crear - destruir entradas en /proc
