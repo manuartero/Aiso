@@ -5,6 +5,8 @@
 #include <linux/module.h>	/* modulo */
 #include <linux/proc_fs.h>	/* struct proc_dir_entry */
 
+#define NOMBRE_DIRECTORIO_PRINCIPAL "aisoclip"
+
 // Boolean
 typedef int boolean;
 #define true 1

@@ -42,10 +42,10 @@ int modulo_init(void)
 {
     int error = 0; 
     printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", nombre_directorio);   
-    printk("\ndirectorio_aisoclip = %p", (struct proc_dir_entry *) directorio_aisoclip);
-
-    //directorio_principal = (struct proc_dir_entry *) crear_directorio(nombre_directorio);
-    //if (directorio_principal == NULL) {error = -1;}
+    
+    if (directorio_aisoclip == NULL) {
+        directorio_aisoclip = crear_directorio(NOMBRE_DIRECTORIO_PRINCIPAL);
+    }
     
  	directorio_principal = crear_sub_directorio(nombre_directorio, directorio_aisoclip);
  	

@@ -14,9 +14,10 @@ int manager_init(void)
 {
     int error = 0;
     
-    directorio_aisoclip = crear_directorio(NOMBRE_DIRECTORIO_PRINCIPAL);
-    printk("Despues de crear directorio_aisoclip = %p", (struct proc_dir_entry *) directorio_aisoclip);
-
+    if (directorio_aisoclip == NULL) {
+      directorio_aisoclip = crear_directorio(NOMBRE_DIRECTORIO_PRINCIPAL);
+    }
+    
     error |= crear_entrada("activar", directorio_aisoclip, leer_activar, escribir_activar);
     error |= crear_entrada("desactivar", directorio_aisoclip, leer_desactivar, escribir_desactivar);
     error |= crear_entrada("monitor", directorio_aisoclip, leer_monitor, escribir_monitor);
