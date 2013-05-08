@@ -10,13 +10,15 @@ struct proc_dir_entry * directorio_principal;
 extern struct proc_dir_entry * directorio_aisoclip;
 struct workqueue_struct * workqueue;
 char* nombre_directorio = "sin_nombre";
-extern int activo;
 struct list_head lista_clipboards;
 unsigned int num_clipboards = 5;
-struct clipstruct * nodo_actual;
+extern struct clipstruct *nodo_actual;
 
 // inicializar la lista
 LIST_HEAD( lista_clipboards );
+
+// kernel thread
+struct task_struct *clipkthread;
 
 // Asignar el numero de clipboards por parametro
 module_param(nombre_directorio, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -33,30 +35,36 @@ MODULE_PARM_DESC(num_clipboards, "Numero de clipboards");
  *   crea la entrada clipboard => inicializar la lista
  *   crea la entrada selection => inicializar el puntero
  *   crea la entrada periodo
- * 2) Inicializar la cola de trabajo
+ * 2) Lanza el thread
  */
 int modulo_init(void)
 {
     int error = 0; 
-    printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", nombre_directorio);   
-    printk("\ndirectorio_aisoclip = %p", (struct proc_dir_entry *) directorio_aisoclip);
-
-    directorio_principal = crear_sub_directorio(nombre_directorio, directorio_aisoclip);
+    printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", __this_module.name);   
+    
+    /*if (directorio_aisoclip == NULL) {
+        directorio_aisoclip = crear_directorio(NOMBRE_DIRECTORIO_PRINCIPAL);
+    }*/
+    
+ 	directorio_principal = crear_sub_directorio(__this_module.name, directorio_aisoclip);
  	
- 	if (directorio_principal == NULL) {error = -1;}
+ 	if (directorio_principal == NULL) {
+ 		printk(KERN_ALERT "Error: No se pudo crear el directorio /%s\n", __this_module.name);
+ 		error = -1;
+ 	}
     error |= crear_lista(); 
     error |= crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
     error |= crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
     
     if (error != 0) {
-    	printk(KERN_INFO "error\n");
+    	printk(KERN_ALERT "error\n");
         return -1;
     }    
     
 	// Inicializamos la cola de tareas
 	workqueue = create_workqueue("cola_tareas");
   	
-    return error;
+    return 0;
 }
 
 
@@ -65,17 +73,18 @@ int modulo_init(void)
  * Elimina la entrada clipboards
  * Liberar la lista
  * Elimina el directorio
- * Elimina la cola de tareas
+ * Elimina el thread si sigue activo
  */
 void modulo_clean(void)
 {
 	liberar_lista();
+	flush_workqueue(workqueue);
+    destroy_workqueue(workqueue);
     eliminar_sub_entrada(nombre_selector, directorio_principal);
     eliminar_sub_entrada(nombre_clipboard, directorio_principal);
-    eliminar_sub_entrada(nombre_periodo, directorio_principal);
-    eliminar_entrada(nombre_directorio);
-    flush_workqueue(workqueue);
-    destroy_workqueue(workqueue);
+    eliminar_sub_entrada(__this_module.name,directorio_aisoclip);
+  	
+  	printk(KERN_INFO "Modulo descargado.\n");
 }
 
 // ------------------------------------------------
@@ -181,6 +190,8 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
     return terminado;
 }
 
+
+
 /**
  * En buffer se almacena la entrada del usuario seguido de un salto de linea
  * Ejemplo: 34 => [3|4|\n|········]
@@ -215,6 +226,9 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
   
   	/* encontrar el buffer en el que vamos a escribir */
     nodo_actual = encontrar_clipboard(nuevo_elemento);
+    
+    printk(KERN_INFO "Elemento_actual = %d\n", nodo_actual->id);
+    
 
     return count;
 }
@@ -226,8 +240,12 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
  * @return caracteres copiados
  */
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
-{   
-    // copiar en el buffer seleccionado <= buffer
+{
+    
+    printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", nodo_actual->id);
+    
+    
+    /* copiar en el buffer seleccionado <= buffer */
     nodo_actual->num_elem = count;
     if (nodo_actual->num_elem > TAM_MAX_BUFFER) {
         nodo_actual->num_elem = TAM_MAX_BUFFER;
@@ -237,8 +255,13 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
         return -EFAULT;
     }
     
+    
+    printk(KERN_INFO "Salimos de escribir_clipboard\n");
+    
     return nodo_actual->num_elem;
 }
+
+
 
 // ------------------------------------
 // funciones auxiliares
