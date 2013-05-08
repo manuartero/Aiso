@@ -41,22 +41,25 @@ MODULE_PARM_DESC(num_clipboards, "Numero de clipboards");
 int modulo_init(void)
 {
     int error = 0; 
-    printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", nombre_directorio);   
+    printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", __this_module.name);   
     
-    if (directorio_aisoclip == NULL) {
+    /*if (directorio_aisoclip == NULL) {
         directorio_aisoclip = crear_directorio(NOMBRE_DIRECTORIO_PRINCIPAL);
-    }
+    }*/
     
- 	directorio_principal = crear_sub_directorio(nombre_directorio, directorio_aisoclip);
+ 	directorio_principal = crear_sub_directorio(__this_module.name, directorio_aisoclip);
  	
- 	if (directorio_principal == NULL) {error = -1;}
+ 	if (directorio_principal == NULL) {
+ 		printk(KERN_ALERT "Error: No se pudo crear el directorio /%s\n", __this_module.name);
+ 		error = -1;
+ 	}
     error |= crear_lista(); 
     error |= crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
     error |= crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
     error |= crear_entrada(nombre_periodo, directorio_principal, leer_periodo, escribir_periodo);
     
     if (error != 0) {
-    	printk(KERN_INFO "error\n");
+    	printk(KERN_ALERT "error\n");
         return -1;
     }    
     
@@ -86,7 +89,7 @@ void modulo_clean(void)
     eliminar_sub_entrada(nombre_selector, directorio_principal);
     eliminar_sub_entrada(nombre_clipboard, directorio_principal);
     eliminar_sub_entrada(nombre_periodo, directorio_principal);
-    eliminar_entrada(nombre_directorio);
+    eliminar_sub_entrada(__this_module.name,directorio_aisoclip);
     
     if (activo) {
     	kthread_stop(clipkthread);

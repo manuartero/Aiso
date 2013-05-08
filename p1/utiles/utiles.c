@@ -1,10 +1,6 @@
 #include "utiles.h"
 
 
-/** DIRECTORIO PRINCIPAL : COMPARTIDO POR CLIP Y MANAGER */
-struct proc_dir_entry * directorio_aisoclip;
-EXPORT_SYMBOL(directorio_aisoclip);
-
 
 // -------------------------------------------------
 // Funciones para crear - destruir entradas en /proc
@@ -27,8 +23,8 @@ struct proc_dir_entry * crear_sub_directorio(const char* nombre_directorio, stru
 	struct proc_dir_entry * directorio;
 	
 	if (directorio_padre== NULL)
-		printk(KERN_INFO "el directorio padre es null para el dir %s\n", nombre_directorio);
-   	 directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
+		printk(KERN_INFO "el directorio padre es null para el dir %s\n por lo que se creara en la raiz /proc", nombre_directorio);
+   	directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
     
     // comprobacion de errores
 	if (directorio == NULL) {
@@ -53,12 +49,14 @@ int crear_entrada(const char * nombre_entrada, struct proc_dir_entry *directorio
     struct proc_dir_entry * nueva_entrada;
     
     /* creamos la entrada principal */
-    nueva_entrada = create_proc_entry(nombre_entrada, 0644, directorio);
+    // Permisos de lectura y escritura para todos es decir 0666
+    nueva_entrada = create_proc_entry(nombre_entrada,  S_IFREG | S_IRUGO | S_IWOTH | S_IWGRP | S_IWUSR, directorio);
     
     /* Rellenar la estructura */
     nueva_entrada->read_proc = leer;
     nueva_entrada->write_proc = escribir;
-    nueva_entrada->mode = S_IFREG | S_IRUGO;
+   // no hace falta ya asigno los permisos al crear la entrada
+    //nueva_entrada->mode = S_IFREG | S_IRUGO | S_IWOTH;
     nueva_entrada->uid = 0; // id usuario 
     nueva_entrada->gid = 0; // id grupo
    

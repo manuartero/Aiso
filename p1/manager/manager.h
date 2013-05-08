@@ -43,5 +43,7 @@ int rm_driver_lista(const char* nombre_nodo);
 
 int eliminar_lista(void);
 
+void liberar_lista(void);
+
 #endif /* MANAGER_H */
 

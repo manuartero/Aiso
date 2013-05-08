@@ -5,7 +5,11 @@ MODULE_AUTHOR("Antonio y Manu");
 module_init(manager_init);
 module_exit(manager_clean);
 
-extern struct proc_dir_entry * directorio_aisoclip;
+/** DIRECTORIO PRINCIPAL : COMPARTIDO POR CLIP Y MANAGER */
+struct proc_dir_entry * directorio_aisoclip;
+EXPORT_SYMBOL(directorio_aisoclip);
+
+
 struct list_head lista_drivers;
 LIST_HEAD( lista_drivers );
 int numero_drivers = 0;
@@ -27,7 +31,7 @@ int manager_init(void)
 
 void manager_clean(void)
 {
-	
+	//liberar_lista();
     eliminar_sub_entrada("monitor", directorio_aisoclip);
     eliminar_sub_entrada("desactivar", directorio_aisoclip);
     eliminar_sub_entrada("activar", directorio_aisoclip);
@@ -65,7 +69,6 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
         terminado = 0;
     } else {
         // copiar el elemento_actual en el buffer del sistema 
-        //FIXME
         list_for_each(pos, &lista_drivers) {
         tmp = list_entry(pos, struct nodo_driver, lista);
       	longitud =strlen(tmp->nombre);
@@ -79,6 +82,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
       	//printk(KERN_INFO "%s\n",nombres_drivers);
         }
         memcpy(buffer,nombres_drivers, terminado);
+        vfree(nombres_drivers);
     }
     
     return terminado;
@@ -89,37 +93,49 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
  * La funcion llamara al programa <modprobe> para instalar el modulo <clip> con el nombre especificado
  * El modulo <clip> tendra que estar en la carpeta /lib/modules/2.6.32-21-generic
  * (ejecutar el comando $> depmod -a)
- * TODO: considerar que introduzco <nombre basura> 
+ * Ademas para q se compile correctamente el cliboard por tener extern directorio_aisoclip hay que compilar manager primero
+ * y copiar el archivo q se genera Modules.symvers a la carpeta donde esta el clipboard y compilarlo despues.
+ * Esto es debido a que en este archivo se indican las variables q se exportan y su direccion de memoria donde estara almacenada.
  */
  int escribir_activar(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    int num_caracteres = 19 + count;
-    char argumento_nombre[num_caracteres];
     char *nombre_introducido= NULL;    
+    int espacio;
+    int encontrado;
     int error = 0;
-    char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, "clip", argumento_nombre, NULL}; 
+    char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, "clip1", NULL}; 
     static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
-    
     nombre_introducido = (char *) vmalloc(count);
     
-    // 1) recoger el nombre del modulo    
-    if ( copy_from_user(nombre_introducido, buffer, count) ) {
-        return -EFAULT;
+    // Cogemos el ultimo elemento para saber si es un salto de linea
+    espacio = buffer[count-1];
+    
+    if (espacio == 10){ 
+   		// 1) recoger el nombre del modulo    
+		if ( copy_from_user(nombre_introducido, buffer, count-1) ) 
+		    return -EFAULT;
+    }
+    else{
+    	// 1) recoger el nombre del modulo
+    	if ( copy_from_user(nombre_introducido, buffer, count-1) ) 
+        	return -EFAULT;
     }
     
+    encontrado = rm_driver_lista(nombre_introducido); 
+  	if (encontrado){
+		printk(KERN_INFO "Ya existe el cliboard %s\n",nombre_introducido);	
+		return -ETXTBSY;
+   	}
+  
     argv[2]=nombre_introducido;
-    
-    add_driver_lista(nombre_introducido,count);
-    
-    // 2) ejecutar modprobe
-    strcpy(argumento_nombre, "nombre_directorio=");
-    strcat(argumento_nombre, nombre_introducido);
-    
     
     error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
     if(error){
+    	printk(KERN_INFO "error en el user mode helper\n");
         return -1;
-    } 
+    }
+     
+    add_driver_lista(nombre_introducido,count);
     
     numero_drivers++;
     return count;
@@ -133,22 +149,34 @@ int escribir_desactivar(struct file *file, const char *buffer, unsigned long cou
     char *nombre_introducido = vmalloc(count);    
     int error = 0;
     int encontrado;
-    char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, "clip", NULL}; 
+    int espacio;
+    char *argv[] = { "/sbin/modprobe", "-ro", nombre_introducido, "clip1", NULL}; 
     static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
     
-    // 1) recoger el nombre del modulo    
-    if ( copy_from_user(nombre_introducido, buffer, count) ) {
-        return -EFAULT;
+    // Cogemos el ultimo elemento para saber si es un salto de linea
+    espacio = buffer[count-1];
+    
+    if (espacio == 10){ 
+   		// 1) recoger el nombre del modulo    
+		if ( copy_from_user(nombre_introducido, buffer, count-1) )
+		    return -EFAULT;
+    }
+    else{
+    	// 1) recoger el nombre del modulo
+    	if ( copy_from_user(nombre_introducido, buffer, count-1) ) 
+        	return -EFAULT;
     }
     
     encontrado = rm_driver_lista(nombre_introducido); 
   	if (!encontrado){
 		printk(KERN_INFO "no existe el clipboard %s\n",nombre_introducido);	
+		return -ENOENT;
    	}
     
     error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
     if (error){
-        return -1;
+    	printk(KERN_INFO "Error en el user mode helper\n");
+        return -EFAULT;
     }
     
     return count;
@@ -207,13 +235,38 @@ int rm_driver_lista(const char * nombre_nodo)
         tmp = list_entry(pos, struct nodo_driver, lista);
         if ( strcmp(tmp->nombre, nombre_nodo)==0 ) {
             printk("liberamos el nodo: %s\n", tmp->nombre);
+            vfree(tmp->nombre);
             vfree(tmp);
             list_del(pos);
             borrado = 1;
             break;
         }
     }
-
     return borrado;
+}
+
+void liberar_lista(void)
+{
+    struct list_head *pos, *q;
+    struct nodo_driver *tmp=NULL;
+    int error;
+    char *argv[] = { "/sbin/modprobe", "-ro", tmp->nombre, "clip1", NULL}; 
+    static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
+    
+    list_for_each_safe(pos, q, &lista_drivers){
+        tmp = list_entry(pos, struct nodo_driver, lista);
+        printk("liberamos el nodo: %s | ", tmp->nombre);
+        
+        argv[2]=tmp->nombre;
+    	error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
+    	if (error){
+    		printk(KERN_INFO "Error en el user mode helper\n");
+        	return -EFAULT;
+    	}
+    	
+        vfree(tmp->nombre);
+        vfree(tmp);        
+        list_del(pos);
+    }
 }
 
