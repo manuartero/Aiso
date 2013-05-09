@@ -79,13 +79,15 @@ int modulo_init(void)
 void modulo_clean(void)
 {
 	liberar_lista();
-	flush_workqueue(workclip);
-    destroy_workqueue(workclip);
+	
     eliminar_sub_entrada(nombre_selector, directorio_principal);
     eliminar_sub_entrada(nombre_clipboard, directorio_principal);
     eliminar_sub_entrada(__this_module.name,directorio_aisoclip);
-    
+  
   	encolar_tarea(workclip, "Modulo descargado.");
+  	
+  	flush_workqueue(workclip);
+    destroy_workqueue(workclip);
   	
 }
 
@@ -233,7 +235,8 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
    //	snprintf(mi_buff,11,"%d\n",nodo_actual->id);
   // 	strncat (mi_buff2,mi_buff,100);
    	//encolar_tarea(workclip, mi_buff2);
-
+	encolar_tarea(workclip, "Cambio de clipboard.");
+	
     return count;
 }
 
@@ -246,7 +249,7 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
 {
     
-    printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", nodo_actual->id);
+    //printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", nodo_actual->id);
     
     
     /* copiar en el buffer seleccionado <= buffer */
@@ -260,7 +263,9 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
     }
     
     
-    printk(KERN_INFO "Salimos de escribir_clipboard\n");
+    //printk(KERN_INFO "Salimos de escribir_clipboard\n");
+    
+    encolar_tarea(workclip, "Escrito en el clipboard.");
     
     return nodo_actual->num_elem;
 }
@@ -285,7 +290,6 @@ struct clipstruct* encontrar_clipboard(int id)
 
     list_for_each(pos, &lista_clipboards) {
         tmp = list_entry(pos, struct clipstruct, lista);
-        printk(KERN_INFO "id= %d\n", tmp->id);
         if (tmp->id == id){
             break;        
         } 
