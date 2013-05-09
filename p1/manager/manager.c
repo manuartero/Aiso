@@ -108,7 +108,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     nombre_introducido = (char *) vmalloc(count);
     
     // Cogemos el ultimo elemento para saber si es un salto de linea
-    espacio = buffer[count-1];
+    espacio = (int) buffer[count-1];
     
     if (espacio == 10){ 
    		// 1) recoger el nombre del modulo    
@@ -154,7 +154,7 @@ int escribir_desactivar(struct file *file, const char *buffer, unsigned long cou
     static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
     
     // Cogemos el ultimo elemento para saber si es un salto de linea
-    espacio = buffer[count-1];
+    espacio = (int) buffer[count-1];
     
     if (espacio == 10){ 
    		// 1) recoger el nombre del modulo    
@@ -245,6 +245,7 @@ int rm_driver_lista(const char * nombre_nodo)
     return borrado;
 }
 
+/*
 void liberar_lista(void)
 {
     struct list_head *pos, *q;
@@ -269,4 +270,5 @@ void liberar_lista(void)
         list_del(pos);
     }
 }
+*/
 
