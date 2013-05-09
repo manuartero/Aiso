@@ -11,6 +11,8 @@
 #include <linux/vmalloc.h>              /* vmalloc */
 #include "../utiles/utiles.h"           /* utiles */
 
+#define THE_CLIP "clip2"
+
 struct nodo_driver {
     char* nombre;
     struct list_head lista;

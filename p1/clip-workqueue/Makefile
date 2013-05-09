@@ -1,5 +1,5 @@
 obj-m += clip2.o
-clip2-objs := ../utiles/utiles.o clipboard.o
+clip2-objs := ../utiles/utiles.o workclip.o clipboard.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

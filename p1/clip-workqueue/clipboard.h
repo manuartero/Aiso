@@ -9,7 +9,7 @@
 #include <asm/uaccess.h>            /* function copy_from_user */
 #include <linux/moduleparam.h>      /* paso de parametros */
 #include "../utiles/utiles.h"       /* funciones utiles */
-#include "workqueue.h"              /* workqueue */
+#include "workclip.h"              /* workqueue */
 
 /* Declaracion de macros */
 #define nombre_clipboard "clipboard"

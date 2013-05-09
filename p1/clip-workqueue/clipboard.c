@@ -8,11 +8,11 @@ module_exit(modulo_clean);
 /* Variables globales */ 
 struct proc_dir_entry * directorio_principal;
 extern struct proc_dir_entry * directorio_aisoclip;
-struct workqueue_struct * workqueue;
+struct workqueue_struct * workclip;
 char* nombre_directorio = "sin_nombre";
 struct list_head lista_clipboards;
 unsigned int num_clipboards = 5;
-extern struct clipstruct *nodo_actual;
+struct clipstruct *nodo_actual;
 
 // inicializar la lista
 LIST_HEAD( lista_clipboards );
@@ -52,7 +52,7 @@ int modulo_init(void)
  		printk(KERN_ALERT "Error: No se pudo crear el directorio /%s\n", __this_module.name);
  		error = -1;
  	}
-    error |= crear_lista(); 
+    error |= crear_lista();  
     error |= crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
     error |= crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
     
@@ -62,7 +62,8 @@ int modulo_init(void)
     }    
     
 	// Inicializamos la cola de tareas
-	workqueue = create_workqueue("cola_tareas");
+	workclip = create_workqueue("cola_tareas");
+	encolar_tarea(workclip, "Todo inicializado");
   	
     return 0;
 }
@@ -78,13 +79,14 @@ int modulo_init(void)
 void modulo_clean(void)
 {
 	liberar_lista();
-	flush_workqueue(workqueue);
-    destroy_workqueue(workqueue);
+	flush_workqueue(workclip);
+    destroy_workqueue(workclip);
     eliminar_sub_entrada(nombre_selector, directorio_principal);
     eliminar_sub_entrada(nombre_clipboard, directorio_principal);
     eliminar_sub_entrada(__this_module.name,directorio_aisoclip);
+    
+  	encolar_tarea(workclip, "Modulo descargado.");
   	
-  	printk(KERN_INFO "Modulo descargado.\n");
 }
 
 // ------------------------------------------------
@@ -106,7 +108,7 @@ int crear_lista(void)
     elemento->buffer = (char *) vmalloc( sizeof(TAM_MAX_BUFFER) );
     list_add(&elemento->lista, &lista_clipboards);
 
-    printk(KERN_INFO "Creada la lista con un unico elemento\n");
+	//encolar_tarea(workclip, "Creada la lista con un unico elemento");
     
     /* elemento_actual apunta al primer elemento */ 
 	nodo_actual = elemento;
@@ -178,7 +180,6 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
     /* determinar si hemos terminado de escribir */
     /*preguntar porque entra dos veces en el offset*/
     if (offset > 0) {
-    	printk(KERN_INFO "entramos en el offset\n");
         terminado = 0;
     } else {
         /* copiar el contendido del buffer del clipboard en el buffer del sistema */   
@@ -213,22 +214,25 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
 int escribir_indice(struct file *file, const char *buffer, unsigned long count, void *data)
 {
     int nuevo_elemento = 0;
-    
+   // char mi_buff[11];
+    //char* mi_buff2 = "Estamos en el clipboard";
     /* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
 	if ((nuevo_elemento = mi_atoi(buffer))== -1)
 		return -EINVAL;
 
     /* Comprobar que nos han llamado con un id existente */
     if (nuevo_elemento < 1 || nuevo_elemento > num_clipboards){
-    	printk(KERN_INFO "Numero fuera de rango de los clipboard, maximo tamaño = %d\n", num_clipboards);
+    	printk(KERN_ALERT "Numero fuera de rango de los clipboard, maximo tamaño = %d\n", num_clipboards);
     	return -EINVAL;
     }
   
   	/* encontrar el buffer en el que vamos a escribir */
     nodo_actual = encontrar_clipboard(nuevo_elemento);
     
-    printk(KERN_INFO "Elemento_actual = %d\n", nodo_actual->id);
     
+   //	snprintf(mi_buff,11,"%d\n",nodo_actual->id);
+  // 	strncat (mi_buff2,mi_buff,100);
+   	//encolar_tarea(workclip, mi_buff2);
 
     return count;
 }

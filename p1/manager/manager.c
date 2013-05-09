@@ -103,7 +103,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     int espacio;
     int encontrado;
     int error = 0;
-    char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, "clip1", NULL}; 
+    char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, THE_CLIP, NULL}; 
     static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
     nombre_introducido = (char *) vmalloc(count);
     
@@ -117,7 +117,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     }
     else{
     	// 1) recoger el nombre del modulo
-    	if ( copy_from_user(nombre_introducido, buffer, count-1) ) 
+    	if ( copy_from_user(nombre_introducido, buffer, count) ) 
         	return -EFAULT;
     }
     
@@ -150,7 +150,7 @@ int escribir_desactivar(struct file *file, const char *buffer, unsigned long cou
     int error = 0;
     int encontrado;
     int espacio;
-    char *argv[] = { "/sbin/modprobe", "-ro", nombre_introducido, "clip1", NULL}; 
+    char *argv[] = { "/sbin/modprobe", "-ro", nombre_introducido, THE_CLIP, NULL}; 
     static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
     
     // Cogemos el ultimo elemento para saber si es un salto de linea
@@ -163,7 +163,7 @@ int escribir_desactivar(struct file *file, const char *buffer, unsigned long cou
     }
     else{
     	// 1) recoger el nombre del modulo
-    	if ( copy_from_user(nombre_introducido, buffer, count-1) ) 
+    	if ( copy_from_user(nombre_introducido, buffer, count) ) 
         	return -EFAULT;
     }
     
