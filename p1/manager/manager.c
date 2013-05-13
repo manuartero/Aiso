@@ -121,7 +121,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
         	return -EFAULT;
     }
     
-    encontrado = rm_driver_lista(nombre_introducido); 
+    encontrado = encontrar_lista(nombre_introducido); 
   	if (encontrado){
 		printk(KERN_INFO "Ya existe el cliboard %s\n",nombre_introducido);	
 		return -ETXTBSY;
@@ -245,6 +245,23 @@ int rm_driver_lista(const char * nombre_nodo)
     return borrado;
 }
 
+int encontrar_lista(const char * nombre_nodo)
+{
+    struct list_head *pos;
+    struct nodo_driver *tmp;
+    int encontrado = 0;
+
+    list_for_each(pos, &lista_drivers){
+        tmp = list_entry(pos, struct nodo_driver, lista);
+        if ( strcmp(tmp->nombre, nombre_nodo)==0 ) {
+            printk("Encontrado el nodo: %s\n", tmp->nombre);
+            encontrado = 1;
+            break;
+        }
+    }
+    return encontrado;
+}
+/*
 void liberar_lista(void)
 {
     struct list_head *pos, *q;
@@ -268,5 +285,5 @@ void liberar_lista(void)
         vfree(tmp);        
         list_del(pos);
     }
-}
+}*/
 
