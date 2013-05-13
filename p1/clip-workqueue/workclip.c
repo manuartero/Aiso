@@ -14,7 +14,8 @@ void procesar_nodo(struct work_struct * nodo)
     printk(KERN_INFO "Procesado del nodo ==> %s\n", n->mensaje );
 
     // 3) Liberamos los recursos
-    //kfree( (void *) n );    
+    kfree( (void *) n );    
+    
     return;
 }
 
