@@ -23,7 +23,7 @@ struct proc_dir_entry * crear_sub_directorio(const char* nombre_directorio, stru
 	struct proc_dir_entry * directorio;
 	
 	if (directorio_padre== NULL)
-		printk(KERN_INFO "el directorio padre es null para el dir %s\n por lo que se creara en la raiz /proc", nombre_directorio);
+		printk(KERN_INFO "el directorio padre es null para el dir %s por lo que se creara en la raiz /proc", nombre_directorio);
    	directorio = proc_mkdir(nombre_directorio, directorio_padre); 	
     
     // comprobacion de errores
@@ -33,7 +33,7 @@ struct proc_dir_entry * crear_sub_directorio(const char* nombre_directorio, stru
 		return NULL;
 	}
 
-    printk(KERN_INFO "Creado el directorio /proc/%s \n", nombre_directorio);
+   // printk(KERN_INFO "Creado el directorio /proc/%s/%s \n", nombre_directorio);
     return directorio;
 }
 

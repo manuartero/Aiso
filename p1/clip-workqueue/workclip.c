@@ -14,6 +14,7 @@ void procesar_nodo(struct work_struct * nodo)
     printk(KERN_INFO "Procesado del nodo ==> %s\n", n->mensaje );
 
     // 3) Liberamos los recursos
+   // vfree(n->mensaje);
     kfree( (void *) n );    
     
     return;
@@ -24,7 +25,7 @@ void procesar_nodo(struct work_struct * nodo)
  * @param (const char *) encola un nodo con este mensaje
  * @return (int) flag errores
  */
-int encolar_tarea(struct workqueue_struct * cola, const char * mensaje)
+int encolar_tarea(struct workqueue_struct * cola,  char * mensaje)
 {
     int error = 0;
     
@@ -38,8 +39,10 @@ int encolar_tarea(struct workqueue_struct * cola, const char * mensaje)
      // s = vmalloc(sizeof(mensaje));
      
       strcpy(nodo->mensaje, mensaje);
+      
       // 4) Encolamos el nodo
       error = queue_work(cola, (struct work_struct *) nodo);
+      //kfree(mensaje);
     }
     
     return error;

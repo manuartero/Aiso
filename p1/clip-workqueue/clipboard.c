@@ -17,8 +17,6 @@ struct clipstruct *nodo_actual;
 // inicializar la lista
 LIST_HEAD( lista_clipboards );
 
-// kernel thread
-struct task_struct *clipkthread;
 
 // Asignar el numero de clipboards por parametro
 module_param(nombre_directorio, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -159,6 +157,8 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
     if (offset > 0) {
         terminado = 0;
     } else {
+    	printk(KERN_INFO "leer_indice. Seleccionado: %d\n", nodo_actual->id);
+   		id_clipboard = snprintf(mi_buff,11,"%d\n",nodo_actual->id);
         /* copiar el elemento_actual en el buffer del sistema */ 
         memcpy(buffer, mi_buff, id_clipboard);
         terminado = id_clipboard;
@@ -177,7 +177,7 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
 int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
     int terminado;
-    printk(KERN_INFO "leer_clipboard. Seleccionado: %d\n", nodo_actual->id);
+  
     
     /* determinar si hemos terminado de escribir */
     /*preguntar porque entra dos veces en el offset*/
@@ -185,7 +185,7 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
         terminado = 0;
     } else {
         /* copiar el contendido del buffer del clipboard en el buffer del sistema */   
-        
+        printk(KERN_INFO "leer_clipboard. Seleccionado: %d\n", nodo_actual->id);
         memcpy(buffer, nodo_actual->buffer, nodo_actual->num_elem);
         terminado = nodo_actual->num_elem;
     }
@@ -216,26 +216,39 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
 int escribir_indice(struct file *file, const char *buffer, unsigned long count, void *data)
 {
     int nuevo_elemento = 0;
-   // char mi_buff[11];
-    //char* mi_buff2 = "Estamos en el clipboard";
-    /* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
+   	char *mi_buff;
+    char* mi_buff2;
+    
+   
+	mi_buff= (char *) vmalloc( sizeof(11) );
+	mi_buff2= (char *) vmalloc( sizeof(TAM_MAX_BUFFER));
+	/* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
 	if ((nuevo_elemento = mi_atoi(buffer))== -1)
 		return -EINVAL;
 
-    /* Comprobar que nos han llamado con un id existente */
-    if (nuevo_elemento < 1 || nuevo_elemento > num_clipboards){
-    	printk(KERN_ALERT "Numero fuera de rango de los clipboard, maximo tamaño = %d\n", num_clipboards);
-    	return -EINVAL;
-    }
+	/* Comprobar que nos han llamado con un id existente */
+	if (nuevo_elemento < 1 || nuevo_elemento > num_clipboards){
+		printk(KERN_ALERT "Numero fuera de rango de los clipboard, maximo tamaño = %d\n", num_clipboards);
+		return -EINVAL;
+	}
   
   	/* encontrar el buffer en el que vamos a escribir */
-    nodo_actual = encontrar_clipboard(nuevo_elemento);
-    
-    
-   //	snprintf(mi_buff,11,"%d\n",nodo_actual->id);
-  // 	strncat (mi_buff2,mi_buff,100);
-   	//encolar_tarea(workclip, mi_buff2);
-	encolar_tarea(workclip, "Cambio de clipboard.");
+	nodo_actual = encontrar_clipboard(nuevo_elemento);
+	
+	strcpy(mi_buff2, "Cambiamos en el modulo: ");
+    strcat(mi_buff2, __this_module.name);
+	strcat(mi_buff2," al cliboard con numero: ");
+  	snprintf(mi_buff,11,"%d",nodo_actual->id);
+   	strcat (mi_buff2,mi_buff);
+   	
+   	
+   	strcat(mi_buff2, ". Que contiene: ");
+   	snprintf(mi_buff,11,"%d",nodo_actual->num_elem);
+   	strcat (mi_buff2,mi_buff);
+   	strcat(mi_buff2," caracteres.");
+   	encolar_tarea(workclip, mi_buff2);
+   	vfree(mi_buff);
+   	vfree(mi_buff2);
 	
     return count;
 }
@@ -248,6 +261,13 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
  */
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
 {
+    char *mi_buff;
+    char* mi_buff2;
+    
+   
+	mi_buff= (char *) vmalloc( sizeof(11) );
+	mi_buff2= (char *) vmalloc( sizeof(TAM_MAX_BUFFER));
+    
     
     //printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", nodo_actual->id);
     
@@ -265,7 +285,21 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
     
     //printk(KERN_INFO "Salimos de escribir_clipboard\n");
     
-    encolar_tarea(workclip, "Escrito en el clipboard.");
+    strcpy(mi_buff2, "Escribimos en el modulo: ");
+    strcat(mi_buff2, __this_module.name);
+	strcat(mi_buff2," en el cliboard numero: ");
+  	snprintf(mi_buff,11,"%d",nodo_actual->id);
+   	strcat (mi_buff2,mi_buff);
+   	
+   	
+   	strcat(mi_buff2, ". Que contiene: ");
+   	snprintf(mi_buff,11,"%d",nodo_actual->num_elem);
+   	strcat (mi_buff2,mi_buff);
+   	strcat(mi_buff2," caracteres.");
+   	encolar_tarea(workclip, mi_buff2);
+   	vfree(mi_buff);
+   	vfree(mi_buff2);
+    //encolar_tarea(workclip, "Escrito en el clipboard.");
     
     return nodo_actual->num_elem;
 }
