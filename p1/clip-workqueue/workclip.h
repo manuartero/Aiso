@@ -1,9 +1,9 @@
 #ifndef WORKQUEUE_H
 #define WORKQUEUE_H
  
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/workqueue.h>
+#include <linux/kernel.h>           /* kernel */
+#include <linux/module.h>           /* module */
+#include <linux/workqueue.h>        /* workqueue_struct */
 #include <linux/vmalloc.h>          /* funcion vmalloc */
 
 struct work_struct_ampliado {

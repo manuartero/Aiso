@@ -10,6 +10,7 @@
 #include <linux/moduleparam.h>      /* paso de parametros */
 #include "../utiles/utiles.h"       /* funciones utiles */
 #include "workclip.h"              /* workqueue */
+#include <linux/kthread.h>          /* thread */
 
 /* Declaracion de macros */
 #define nombre_clipboard "clipboard"
@@ -34,6 +35,9 @@ int crear_lista(void);
 
 void liberar_lista(void);
 
+/* Funcion del thread */
+int funcion_thread(void * data);
+
 
 /* Funciones de callback */
 int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
@@ -44,6 +48,9 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
 
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data);
 
+int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data);
+
+int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data);
 
 /* Funciones auxiliares */
 struct clipstruct* encontrar_clipboard(int id);

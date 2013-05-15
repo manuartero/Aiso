@@ -14,6 +14,10 @@ struct list_head lista_clipboards;
 unsigned int num_clipboards = 5;
 struct clipstruct *nodo_actual;
 
+int activo;
+int periodo;
+struct task_struct * clipkthread;
+
 // inicializar la lista
 LIST_HEAD( lista_clipboards );
 
@@ -53,7 +57,8 @@ int modulo_init(void)
     error |= crear_lista();  
     error |= crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
     error |= crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
-    
+    error |= crear_entrada(nombre_periodo, directorio_principal, leer_periodo, escribir_periodo);
+
     if (error != 0) {
     	printk(KERN_ALERT "error\n");
         return -1;
@@ -63,6 +68,16 @@ int modulo_init(void)
 	workclip = create_workqueue("cola_tareas");
 	encolar_tarea(workclip, "Todo inicializado");
   	
+    // Inicializamos el kthread
+    clipkthread = kthread_run(funcion_thread, NULL, "clipkthread");
+    activo = 1;
+    if (clipkthread == (struct task_struct *) ERR_PTR) {
+        return -ENOMEM;
+    }
+    // DEBUG 
+    periodo = 0;
+
+
     return 0;
 }
 
@@ -80,13 +95,63 @@ void modulo_clean(void)
 	
     eliminar_sub_entrada(nombre_selector, directorio_principal);
     eliminar_sub_entrada(nombre_clipboard, directorio_principal);
+    eliminar_sub_entrada(nombre_periodo, directorio_principal);
     eliminar_sub_entrada(__this_module.name,directorio_aisoclip);
+
+    if(activo) {
+        kthread_stop(clipkthread);
+    } else {
+        encolar_tarea(workclip, "El kernel thread ya no esta activo cuando descargamos.");
+    }
   
   	encolar_tarea(workclip, "Modulo descargado.");
   	
   	flush_workqueue(workclip);
-    destroy_workqueue(workclip);
-  	
+    destroy_workqueue(workclip);  	
+}
+
+// ------------------------------------------------
+
+int funcion_thread(void * data)
+{
+    char buffer_auxiliar[11]; 
+	char buffer[TAM_MAX_BUFFER];
+	activo = 1;	  
+
+    encolar_tarea(workclip, "ejecutando kernel thread.");
+
+	for(;;) {
+		if (periodo==0){
+			set_current_state(TASK_INTERRUPTIBLE);
+			schedule();
+		} else {
+			msleep(10000);
+		}
+	
+		if (signal_pending(current)) {
+			activo = 0; 
+			break;
+		}
+		
+		if (kthread_should_stop()) {
+			activo = 0;
+			break;
+		}	
+
+        strcpy(buffer, "En modulo: ");
+        strcat(buffer, __this_module.name);
+	    strcat(buffer," ; Cliboard con numero: ");
+      	snprintf(buffer_auxiliar,11,"%d",nodo_actual->id);
+       	strcat (buffer,buffer_auxiliar);
+       	strcat(buffer, ". Que contiene: ");
+       	snprintf(buffer_auxiliar,11,"%d",nodo_actual->num_elem);
+       	strcat (buffer,buffer_auxiliar);
+       	
+		encolar_tarea(workclip, buffer);	
+	} // for
+
+	encolar_tarea(workclip, "finalizando ejecucion kernel thread.");
+	return 0;
 }
 
 // ------------------------------------------------
@@ -137,6 +202,24 @@ void liberar_lista(void)
 // funciones de callback
 // -------------------------------------------
 
+int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
+{
+    // TODO
+    return 0;
+}
+
+int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data)
+{    
+    int nuevo_elemento = mi_atoi(buffer);
+    if ( nuevo_elemento == -1 )
+        return -EINVAL;
+
+    periodo = nuevo_elemento;
+    encolar_tarea(workclip, "Escribimos en periodo");
+    wake_up_process(clipkthread);
+
+    return count;
+}
 
 /** 
  * Funcion que se llama cuando leemos del archivo /proc/aisoclip/selection
@@ -250,6 +333,12 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
    	vfree(mi_buff);
    	vfree(mi_buff2);
 	
+
+    // Despertamos al thread
+    if (periodo == 0) {
+        wake_up_process(clipkthread);
+    }
+    
     return count;
 }
 
@@ -301,6 +390,11 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
    	vfree(mi_buff2);
     //encolar_tarea(workclip, "Escrito en el clipboard.");
     
+    // desperamos al thread
+    if (periodo == 0) {
+        wake_up_process(clipkthread);
+    }
+
     return nodo_actual->num_elem;
 }
 
