@@ -14,11 +14,13 @@ struct list_head lista_clipboards;
 unsigned int num_clipboards = 5;
 struct clipstruct *nodo_actual;
 
+int activo;
+int periodo;
+struct task_struct * clipkthread;
+
 // inicializar la lista
 LIST_HEAD( lista_clipboards );
 
-// kernel thread
-struct task_struct *clipkthread;
 
 // Asignar el numero de clipboards por parametro
 module_param(nombre_directorio, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -55,7 +57,8 @@ int modulo_init(void)
     error |= crear_lista();  
     error |= crear_entrada(nombre_clipboard, directorio_principal, leer_clipboard, escribir_clipboard);
     error |= crear_entrada(nombre_selector, directorio_principal, leer_indice, escribir_indice);
-    
+    error |= crear_entrada(nombre_periodo, directorio_principal, leer_periodo, escribir_periodo);
+
     if (error != 0) {
     	printk(KERN_ALERT "error\n");
         return -1;
@@ -65,6 +68,16 @@ int modulo_init(void)
 	workclip = create_workqueue("cola_tareas");
 	encolar_tarea(workclip, "Todo inicializado");
   	
+    // Inicializamos el kthread
+    clipkthread = kthread_run(funcion_thread, NULL, "clipkthread");
+    activo = 1;
+    if (clipkthread == (struct task_struct *) ERR_PTR) {
+        return -ENOMEM;
+    }
+    // DEBUG 
+    periodo = 0;
+
+
     return 0;
 }
 
@@ -82,13 +95,63 @@ void modulo_clean(void)
 	
     eliminar_sub_entrada(nombre_selector, directorio_principal);
     eliminar_sub_entrada(nombre_clipboard, directorio_principal);
+    eliminar_sub_entrada(nombre_periodo, directorio_principal);
     eliminar_sub_entrada(__this_module.name,directorio_aisoclip);
+
+    if(activo) {
+        kthread_stop(clipkthread);
+    } else {
+        encolar_tarea(workclip, "El kernel thread ya no esta activo cuando descargamos.");
+    }
   
   	encolar_tarea(workclip, "Modulo descargado.");
   	
   	flush_workqueue(workclip);
-    destroy_workqueue(workclip);
-  	
+    destroy_workqueue(workclip);  	
+}
+
+// ------------------------------------------------
+
+int funcion_thread(void * data)
+{
+    char buffer_auxiliar[11]; 
+	char buffer[TAM_MAX_BUFFER];
+	activo = 1;	  
+
+    encolar_tarea(workclip, "ejecutando kernel thread.");
+
+	for(;;) {
+		if (periodo==0){
+			set_current_state(TASK_INTERRUPTIBLE);
+			schedule();
+		} else {
+			msleep(10000);
+		}
+	
+		if (signal_pending(current)) {
+			activo = 0; 
+			break;
+		}
+		
+		if (kthread_should_stop()) {
+			activo = 0;
+			break;
+		}	
+
+        strcpy(buffer, "En modulo: ");
+        strcat(buffer, __this_module.name);
+	    strcat(buffer," ; Cliboard con numero: ");
+      	snprintf(buffer_auxiliar,11,"%d",nodo_actual->id);
+       	strcat (buffer,buffer_auxiliar);
+       	strcat(buffer, ". Que contiene: ");
+       	snprintf(buffer_auxiliar,11,"%d",nodo_actual->num_elem);
+       	strcat (buffer,buffer_auxiliar);
+       	
+		encolar_tarea(workclip, buffer);	
+	} // for
+
+	encolar_tarea(workclip, "finalizando ejecucion kernel thread.");
+	return 0;
 }
 
 // ------------------------------------------------
@@ -139,6 +202,24 @@ void liberar_lista(void)
 // funciones de callback
 // -------------------------------------------
 
+int leer_periodo(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
+{
+    // TODO
+    return 0;
+}
+
+int escribir_periodo(struct file *file, const char *buffer, unsigned long count, void *data)
+{    
+    int nuevo_elemento = mi_atoi(buffer);
+    if ( nuevo_elemento == -1 )
+        return -EINVAL;
+
+    periodo = nuevo_elemento;
+    encolar_tarea(workclip, "Escribimos en periodo");
+    wake_up_process(clipkthread);
+
+    return count;
+}
 
 /** 
  * Funcion que se llama cuando leemos del archivo /proc/aisoclip/selection
@@ -159,6 +240,8 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
     if (offset > 0) {
         terminado = 0;
     } else {
+    	printk(KERN_INFO "leer_indice. Seleccionado: %d\n", nodo_actual->id);
+   		id_clipboard = snprintf(mi_buff,11,"%d\n",nodo_actual->id);
         /* copiar el elemento_actual en el buffer del sistema */ 
         memcpy(buffer, mi_buff, id_clipboard);
         terminado = id_clipboard;
@@ -177,7 +260,7 @@ int leer_indice(char *buffer, char **buffer_location, off_t offset, int buffer_l
 int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
     int terminado;
-    printk(KERN_INFO "leer_clipboard. Seleccionado: %d\n", nodo_actual->id);
+  
     
     /* determinar si hemos terminado de escribir */
     /*preguntar porque entra dos veces en el offset*/
@@ -185,7 +268,7 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
         terminado = 0;
     } else {
         /* copiar el contendido del buffer del clipboard en el buffer del sistema */   
-        
+        printk(KERN_INFO "leer_clipboard. Seleccionado: %d\n", nodo_actual->id);
         memcpy(buffer, nodo_actual->buffer, nodo_actual->num_elem);
         terminado = nodo_actual->num_elem;
     }
@@ -216,27 +299,46 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
 int escribir_indice(struct file *file, const char *buffer, unsigned long count, void *data)
 {
     int nuevo_elemento = 0;
-   // char mi_buff[11];
-    //char* mi_buff2 = "Estamos en el clipboard";
-    /* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
+   	char *mi_buff;
+    char* mi_buff2;
+    
+   
+	mi_buff= (char *) vmalloc( sizeof(11) );
+	mi_buff2= (char *) vmalloc( sizeof(TAM_MAX_BUFFER));
+	/* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
 	if ((nuevo_elemento = mi_atoi(buffer))== -1)
 		return -EINVAL;
 
-    /* Comprobar que nos han llamado con un id existente */
-    if (nuevo_elemento < 1 || nuevo_elemento > num_clipboards){
-    	printk(KERN_ALERT "Numero fuera de rango de los clipboard, maximo tamaño = %d\n", num_clipboards);
-    	return -EINVAL;
-    }
+	/* Comprobar que nos han llamado con un id existente */
+	if (nuevo_elemento < 1 || nuevo_elemento > num_clipboards){
+		printk(KERN_ALERT "Numero fuera de rango de los clipboard, maximo tamaño = %d\n", num_clipboards);
+		return -EINVAL;
+	}
   
   	/* encontrar el buffer en el que vamos a escribir */
-    nodo_actual = encontrar_clipboard(nuevo_elemento);
-    
-    
-   //	snprintf(mi_buff,11,"%d\n",nodo_actual->id);
-  // 	strncat (mi_buff2,mi_buff,100);
-   	//encolar_tarea(workclip, mi_buff2);
-	encolar_tarea(workclip, "Cambio de clipboard.");
+	nodo_actual = encontrar_clipboard(nuevo_elemento);
 	
+	strcpy(mi_buff2, "Cambiamos en el modulo: ");
+    strcat(mi_buff2, __this_module.name);
+	strcat(mi_buff2," al cliboard con numero: ");
+  	snprintf(mi_buff,11,"%d",nodo_actual->id);
+   	strcat (mi_buff2,mi_buff);
+   	
+   	
+   	strcat(mi_buff2, ". Que contiene: ");
+   	snprintf(mi_buff,11,"%d",nodo_actual->num_elem);
+   	strcat (mi_buff2,mi_buff);
+   	strcat(mi_buff2," caracteres.");
+   	encolar_tarea(workclip, mi_buff2);
+   	vfree(mi_buff);
+   	vfree(mi_buff2);
+	
+
+    // Despertamos al thread
+    if (periodo == 0) {
+        wake_up_process(clipkthread);
+    }
+    
     return count;
 }
 
@@ -248,6 +350,13 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
  */
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
 {
+    char *mi_buff;
+    char* mi_buff2;
+    
+   
+	mi_buff= (char *) vmalloc( sizeof(11) );
+	mi_buff2= (char *) vmalloc( sizeof(TAM_MAX_BUFFER));
+    
     
     //printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", nodo_actual->id);
     
@@ -265,8 +374,27 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
     
     //printk(KERN_INFO "Salimos de escribir_clipboard\n");
     
-    encolar_tarea(workclip, "Escrito en el clipboard.");
+    strcpy(mi_buff2, "Escribimos en el modulo: ");
+    strcat(mi_buff2, __this_module.name);
+	strcat(mi_buff2," en el cliboard numero: ");
+  	snprintf(mi_buff,11,"%d",nodo_actual->id);
+   	strcat (mi_buff2,mi_buff);
+   	
+   	
+   	strcat(mi_buff2, ". Que contiene: ");
+   	snprintf(mi_buff,11,"%d",nodo_actual->num_elem);
+   	strcat (mi_buff2,mi_buff);
+   	strcat(mi_buff2," caracteres.");
+   	encolar_tarea(workclip, mi_buff2);
+   	vfree(mi_buff);
+   	vfree(mi_buff2);
+    //encolar_tarea(workclip, "Escrito en el clipboard.");
     
+    // desperamos al thread
+    if (periodo == 0) {
+        wake_up_process(clipkthread);
+    }
+
     return nodo_actual->num_elem;
 }
 
