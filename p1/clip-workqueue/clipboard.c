@@ -114,8 +114,8 @@ void modulo_clean(void)
 
 int funcion_thread(void * data)
 {
-    char buffer_auxiliar[11]; 
-	char buffer[TAM_MAX_BUFFER];
+    char *buffer_auxiliar; 
+	char *buffer;
 	activo = 1;	  
 
     encolar_tarea(workclip, "ejecutando kernel thread.");
@@ -137,7 +137,9 @@ int funcion_thread(void * data)
 			activo = 0;
 			break;
 		}	
-
+		
+		buffer_auxiliar= (char *) vmalloc( sizeof(11) );
+		buffer= (char *) vmalloc( sizeof(TAM_MAX_BUFFER));
         strcpy(buffer, "En modulo: ");
         strcat(buffer, __this_module.name);
 	    strcat(buffer," ; Cliboard con numero: ");
@@ -147,7 +149,10 @@ int funcion_thread(void * data)
        	snprintf(buffer_auxiliar,11,"%d",nodo_actual->num_elem);
        	strcat (buffer,buffer_auxiliar);
        	
-		encolar_tarea(workclip, buffer);	
+		encolar_tarea(workclip, buffer);
+		
+		vfree(buffer_auxiliar);
+   		vfree(buffer);	
 	} // for
 
 	encolar_tarea(workclip, "finalizando ejecucion kernel thread.");
@@ -298,13 +303,8 @@ int leer_clipboard(char *buffer, char **buffer_location, off_t offset, int buffe
  */
 int escribir_indice(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    int nuevo_elemento = 0;
-   	char *mi_buff;
-    char* mi_buff2;
-    
+    int nuevo_elemento = 0;    
    
-	mi_buff= (char *) vmalloc( sizeof(11) );
-	mi_buff2= (char *) vmalloc( sizeof(TAM_MAX_BUFFER));
 	/* transformar el buffer de entrada en int y comprobar q e sun numero correcto*/
 	if ((nuevo_elemento = mi_atoi(buffer))== -1)
 		return -EINVAL;
@@ -318,22 +318,6 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
   	/* encontrar el buffer en el que vamos a escribir */
 	nodo_actual = encontrar_clipboard(nuevo_elemento);
 	
-	strcpy(mi_buff2, "Cambiamos en el modulo: ");
-    strcat(mi_buff2, __this_module.name);
-	strcat(mi_buff2," al cliboard con numero: ");
-  	snprintf(mi_buff,11,"%d",nodo_actual->id);
-   	strcat (mi_buff2,mi_buff);
-   	
-   	
-   	strcat(mi_buff2, ". Que contiene: ");
-   	snprintf(mi_buff,11,"%d",nodo_actual->num_elem);
-   	strcat (mi_buff2,mi_buff);
-   	strcat(mi_buff2," caracteres.");
-   	encolar_tarea(workclip, mi_buff2);
-   	vfree(mi_buff);
-   	vfree(mi_buff2);
-	
-
     // Despertamos al thread
     if (periodo == 0) {
         wake_up_process(clipkthread);
@@ -350,13 +334,6 @@ int escribir_indice(struct file *file, const char *buffer, unsigned long count, 
  */
 int escribir_clipboard(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    char *mi_buff;
-    char* mi_buff2;
-    
-   
-	mi_buff= (char *) vmalloc( sizeof(11) );
-	mi_buff2= (char *) vmalloc( sizeof(TAM_MAX_BUFFER));
-    
     
     //printk(KERN_INFO "escribir_clipboard. Seleccionado: %d\n", nodo_actual->id);
     
@@ -371,24 +348,6 @@ int escribir_clipboard(struct file *file, const char *buffer, unsigned long coun
         return -EFAULT;
     }
     
-    
-    //printk(KERN_INFO "Salimos de escribir_clipboard\n");
-    
-    strcpy(mi_buff2, "Escribimos en el modulo: ");
-    strcat(mi_buff2, __this_module.name);
-	strcat(mi_buff2," en el cliboard numero: ");
-  	snprintf(mi_buff,11,"%d",nodo_actual->id);
-   	strcat (mi_buff2,mi_buff);
-   	
-   	
-   	strcat(mi_buff2, ". Que contiene: ");
-   	snprintf(mi_buff,11,"%d",nodo_actual->num_elem);
-   	strcat (mi_buff2,mi_buff);
-   	strcat(mi_buff2," caracteres.");
-   	encolar_tarea(workclip, mi_buff2);
-   	vfree(mi_buff);
-   	vfree(mi_buff2);
-    //encolar_tarea(workclip, "Escrito en el clipboard.");
     
     // desperamos al thread
     if (periodo == 0) {
