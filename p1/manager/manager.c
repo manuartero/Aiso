@@ -111,8 +111,6 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     buffer_auxiliar = (char *) vmalloc(1024);
     
 
-    printk(KERN_INFO "cuanto vale count %d\n",count);
-
     for (i=0;i<count;i++){
         if (foo(buffer[i])){
            buffer_auxiliar[i] = buffer[i];         
@@ -122,10 +120,8 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
             break;
         }
     }
-    printk(KERN_INFO "lo q vale i al salir: %d\n",i); 
 
     sscanf(buffer_auxiliar, "%s",  nombre_introducido);    
-    printk(KERN_INFO "Paso de buffer auxiliar : %s  => nombre_introducido : %s \n", buffer_auxiliar, nombre_introducido);
 
     encontrado = encontrar_lista(nombre_introducido); 
   	if (encontrado){
@@ -138,7 +134,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
     if(error){
     	printk(KERN_INFO "error en el user mode helper\n");
-        return -1;
+        return -EFAULT;
     }
      
     add_driver_lista(nombre_introducido,count);
@@ -172,22 +168,24 @@ int escribir_desactivar(struct file *file, const char *buffer, unsigned long cou
             break;
         }
     }
-    printk(KERN_INFO "lo q vale i al salir: %d\n",i); 
 
     sscanf(buffer_auxiliar, "%s",  nombre_introducido);    
-    printk(KERN_INFO "Paso de buffer auxiliar : %s  => nombre_introducido : %s \n", buffer_auxiliar, nombre_introducido);
 
     encontrado = rm_driver_lista(nombre_introducido); 
   	if (!encontrado){
 		printk(KERN_INFO "no existe el clipboard %s\n",nombre_introducido);	
 		return -ENOENT;
    	}
+    argv[1]=nombre_introducido;
     
     error = call_usermodehelper( argv[0], argv, envp, UMH_WAIT_PROC );
     if (error){
     	printk(KERN_INFO "Error en el user mode helper\n");
         return -EFAULT;
     }
+    
+    numero_drivers--;
+    vfree(buffer_auxiliar);
     
     return count;
 }
