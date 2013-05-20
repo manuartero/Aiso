@@ -74,9 +74,6 @@ int modulo_init(void)
     if (clipkthread == (struct task_struct *) ERR_PTR) {
         return -ENOMEM;
     }
-    // DEBUG 
-    periodo = 0;
-
 
     return 0;
 }

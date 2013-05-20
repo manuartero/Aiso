@@ -13,6 +13,7 @@ EXPORT_SYMBOL(directorio_aisoclip);
 struct list_head lista_drivers;
 LIST_HEAD( lista_drivers );
 int numero_drivers = 0;
+//char * buffer_auxiliar;
 
 int manager_init(void)
 {
@@ -99,28 +100,33 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
  */
  int escribir_activar(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    char *nombre_introducido= NULL;    
-    int espacio;
+    char *nombre_introducido= NULL;
     int encontrado;
     int error = 0;
+    char * buffer_auxiliar;
+    int i;
     char *argv[] = { "/sbin/modprobe", "-o", nombre_introducido, THE_CLIP, NULL}; 
     static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
-    nombre_introducido = (char *) vmalloc(count);
+    nombre_introducido = (char *) vmalloc(1024);
+    buffer_auxiliar = (char *) vmalloc(1024);
     
-    // Cogemos el ultimo elemento para saber si es un salto de linea
-    espacio = (int) buffer[count-1];
-    
-    if (espacio == 10){ 
-   		// 1) recoger el nombre del modulo    
-		if ( copy_from_user(nombre_introducido, buffer, count-1) ) 
-		    return -EFAULT;
+
+    printk(KERN_INFO "cuanto vale count %d\n",count);
+
+    for (i=0;i<count;i++){
+        if (foo(buffer[i])){
+           buffer_auxiliar[i] = buffer[i];         
+        }            
+        else{
+            buffer_auxiliar[i] = '\0';
+            break;
+        }
     }
-    else{
-    	// 1) recoger el nombre del modulo
-    	if ( copy_from_user(nombre_introducido, buffer, count) ) 
-        	return -EFAULT;
-    }
-    
+    printk(KERN_INFO "lo q vale i al salir: %d\n",i); 
+
+    sscanf(buffer_auxiliar, "%s",  nombre_introducido);    
+    printk(KERN_INFO "Paso de buffer auxiliar : %s  => nombre_introducido : %s \n", buffer_auxiliar, nombre_introducido);
+
     encontrado = encontrar_lista(nombre_introducido); 
   	if (encontrado){
 		printk(KERN_INFO "Ya existe el cliboard %s\n",nombre_introducido);	
@@ -138,6 +144,7 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
     add_driver_lista(nombre_introducido,count);
     
     numero_drivers++;
+    vfree(buffer_auxiliar);
     return count;
 } 
 
@@ -146,27 +153,30 @@ int leer_monitor(char *buffer, char **buffer_location, off_t offset, int buffer_
  */
 int escribir_desactivar(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    char *nombre_introducido = vmalloc(count);    
+    char *nombre_introducido=NULL; 
+    char * buffer_auxiliar;   
     int error = 0;
     int encontrado;
-    int espacio;
-    char *argv[] = { "/sbin/modprobe", "-ro", nombre_introducido, THE_CLIP, NULL}; 
+    int i;
+    char *argv[] = { "/sbin/rmmod", nombre_introducido, NULL}; 
     static char *envp[] = { "HOME=/", "TERM=linux", "PATH=/sbin:/bin:/usr/sbin:/usr/bin", NULL};
-    
-    // Cogemos el ultimo elemento para saber si es un salto de linea
-    espacio = (int) buffer[count-1];
-    
-    if (espacio == 10){ 
-   		// 1) recoger el nombre del modulo    
-		if ( copy_from_user(nombre_introducido, buffer, count-1) )
-		    return -EFAULT;
+    nombre_introducido = (char *) vmalloc(1024);
+    buffer_auxiliar = (char *) vmalloc(1024);
+
+    for (i=0;i<count;i++){
+        if (foo(buffer[i])){
+           buffer_auxiliar[i] = buffer[i];         
+        }            
+        else{
+            buffer_auxiliar[i] = '\0';
+            break;
+        }
     }
-    else{
-    	// 1) recoger el nombre del modulo
-    	if ( copy_from_user(nombre_introducido, buffer, count) ) 
-        	return -EFAULT;
-    }
-    
+    printk(KERN_INFO "lo q vale i al salir: %d\n",i); 
+
+    sscanf(buffer_auxiliar, "%s",  nombre_introducido);    
+    printk(KERN_INFO "Paso de buffer auxiliar : %s  => nombre_introducido : %s \n", buffer_auxiliar, nombre_introducido);
+
     encontrado = rm_driver_lista(nombre_introducido); 
   	if (!encontrado){
 		printk(KERN_INFO "no existe el clipboard %s\n",nombre_introducido);	

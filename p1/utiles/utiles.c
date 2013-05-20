@@ -110,3 +110,11 @@ int mi_atoi(const char* p)
     }
 }
 
+int foo (char c){
+    int i = (int) c;
+    if (i >= 48 && i <=57) return 1;
+    if (i>= 65 && i<=90) return 1;
+    if (i >=97 && i<=122) return 1;
+    return 0;
+}
+

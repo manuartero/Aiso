@@ -14,7 +14,7 @@ typedef int boolean;
 
 /* Funciones auxiliares */ 
 int mi_atoi(const char* p);
-
+int foo (char c);
 
 /* Funciones para crear-destruir estradas o directorios */
 struct proc_dir_entry * crear_directorio(const char * nombre_directorio);
