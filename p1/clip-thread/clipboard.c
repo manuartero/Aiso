@@ -22,10 +22,6 @@ LIST_HEAD( lista_clipboards );
 struct task_struct *clipkthread;
 
 // Asignar el numero de clipboards por parametro
-module_param(nombre_directorio, charp, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-MODULE_PARM_DESC(nombre_directorio, "Nombre del clipboard");
-
-// Asignar el numero de clipboards por parametro
 module_param(num_clipboards, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 MODULE_PARM_DESC(num_clipboards, "Numero de clipboards");
 
@@ -42,10 +38,6 @@ int modulo_init(void)
 {
     int error = 0; 
     printk(KERN_INFO "EN MODULO INIT DE CLIPBOARD, nombre = %s \n", __this_module.name);   
-    
-    /*if (directorio_aisoclip == NULL) {
-        directorio_aisoclip = crear_directorio(NOMBRE_DIRECTORIO_PRINCIPAL);
-    }*/
     
  	directorio_principal = crear_sub_directorio(__this_module.name, directorio_aisoclip);
  	
