@@ -1,47 +1,47 @@
-Practica 1 - Clipboard múltiple
-===============================
+Practica 3 - Clipboard con workqueues
+==============================
 
 
 Funcionalidad
--------------
+-----------------
 
-#### 1) clipboard basico
+#### Funcionalidad básica
 
- - Se interactua mediante ficheros virtuales en el directorio /proc/aisoclip 
- - tendremos NCLIP clipboards a los que se accedera via /proc/aisoclip/clipboard.
- - se eligira el clipboard mediante /proc/aisoclip/selection.
- - NCLIP se fijara mediante un parametro. 
- 
-> el clipboard multiple se implementara con una lista doblemente enlazada de estructuras __clipstructs__
+La funcionalidad de la práctica es exactamente la misma que para la [versión 2] (https://github.com/manutero/Aiso/blob/master/p2/README.md#funcionalidad).
 
-#### 2) Thread
+La diferencia está en el uso de una estructura *workqueue_struct* para mostrar mensajes *KERN_INFO*
 
-Descripción por hacer
+La estructura utilizada está declarada en el archivo ```workclip.h```
+    struct work_struct_ampliado {
+        struct work_struct work;
+        char  mensaje[256];
+    };
 
-#### 3) manager
+#### Kernel thread asociado
 
-Descripción por hacer
+El kernel thread se ha implementado evitando la espera activa. En esta versión en lugar de lanzar la orden ```printk()``` encola una nueva tarea en la *workqueue* y la cola sacará en el log del kernel el mensaje correspondiente.
 
-#### 4) worqueue
+#### Otros aspectos relevantes
 
-Descripción por hacerse
+El módulo cuenta con las siguientes mejoras no especificadas en el enunciado:
 
+ - Se aprovecha la cola de tareas para encolar todos los mensajes de información del módulo.
+ - Al separar en carpetas independientes los archivos fuente, requiere de una instalación más elaborada.
 ***
 
 Instalación
 -----------
 
-1. compilar el manager 
-2. copiar el archivo ```Module.symvers``` a la carpeta ```clip-thread``` o ```clip-worqueue```
-3. compilar el clip que vayamos a usar 
-4. copiar el ```.ko``` obtenido a la carpeta ```/lib/modules/<version-kernel>```
-5. ejectuar ```$> depmod -a```
-6. instalar ```p1.ko``` (archivo en la carpeta manager)
+1. Compilar el archivo ```manager.c``` mediante la orden ```make```
+2. Copiar el archivo Module.symvers generado a la carpeta ```clip-workqueue```
+3. Compilar el clip : ```$> cd ../clip-workqueue ; make```
+4. Copiar el ```clip2.ko``` obtenido a la carpeta /lib/modules/<version-kernel>
+4. Ejectuar ```$> depmod -a```
+5. Instalar ```p1.ko``` (archivo en la carpeta manager)
 
 ***
 
-Uso
----
+Ejemplo de uso
+--------------------
 
-POR HACER
-
+Ver el [ejemplo de uso para la parte 2] (https://github.com/manutero/Aiso/blob/master/p2/README.md#ejemplo-de-uso)
