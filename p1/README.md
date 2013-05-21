@@ -34,10 +34,10 @@ Esto indicaría al módulo que nuestra lista contendrá hasta 20 nodos.
 
 #### Kernel thread asociado
 
-El kernel thread se ha implementado evitando la espera activa. El proceso se duerme durante hasta que ocurren una de las 3 siguientes opciones:
+El kernel thread se ha implementado evitando la espera activa. El proceso se duerme durante hasta que ocurren una de las siguientes opciones:
 
-1) Entrada **periodo** activada : Se despierta de forma cíclica cada 10 segundos
-2) El usuario escribe en clipboard o selection; se despierta al thread mediante la llamada al sistema ```wake_up_process(clipkthread)```
+1. Entrada **periodo** activada : Se despierta de forma cíclica cada 10 segundos
+2. El usuario escribe en clipboard o selection; se despierta al thread mediante la llamada al sistema ```wake_up_process(clipkthread)```
 
 #### Otros aspectos relevantes
 
@@ -53,8 +53,7 @@ Instalación
 -----------
 
 1. Compilar el archivo ```clipboard.c``` mediante la orden make
-2. Instalar el módulo:
-     $> insmod clip_sin_manager
+2. Instalar el módulo: ```$> insmod clip_sin_manager```
 
 ***
 
