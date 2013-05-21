@@ -1,5 +1,5 @@
 Práctica 2 - Clipboard con manager
-==================================
+===============================
 
 
 Funcionalidad
@@ -11,9 +11,9 @@ Al instalar el módulo se crean bajo la carpeta ```/proc/aisoclip``` tres ficher
 
  - **activar** : Permite instalar nuevos clipboards bajo el directorio ```/proc/aisoclip```
  - **desactivar** : Permite desistalar un clipboard instalado.
- - **monitor** : Aporta información sobre los clipboards activos y señala cuál es el actualmente en uso
+ - **monitor** : Aporta información sobre los clipboards activos.
 
-#### Instalación de módulos desde manager
+#### Instalación de módulos desde el manager
 
 Al escribir sobre la entrada **activar** se crea un nuevo clipboard con el nombre especificado.  
 Si por ejemplo instalamos el módulo _hola_ tendríamos la siguiente jerarquía
@@ -27,7 +27,7 @@ Si por ejemplo instalamos el módulo _hola_ tendríamos la siguiente jerarquía
             selection
         monitor
 
-> Nota : La instalación de módulos se hace mediante *user_mode_helper*
+> Nota : La instalación de módulos se hace mediante *modprobe*
 > La desistalación de módulos se hace mediante *rmmod*
 
 #### Implementación de los clipboards
@@ -56,9 +56,9 @@ Instalación
 2. Copiar el archivo ```Module.symvers``` generado a la carpeta ```clip-thread```
 3. Compilar el clip : 
     $> cd ../clip-thread ; make 
-4. Copiar el ```.ko``` obtenido a la carpeta ```/lib/modules/<version-kernel>```
+4. Copiar el ```clip1.ko``` obtenido a la carpeta ```/lib/modules/<version-kernel>```
 5. Ejectuar ```$> depmod -a```
-6. Instalar ```clip1.ko``` (archivo en la carpeta manager)
+6. Instalar ```p1.ko``` (archivo en la carpeta manager)
 
 ***
 
@@ -72,14 +72,14 @@ Ejemplo de Uso
 
 => Activo: hola
 
-   echo ejemplo > /proc/aisoclip/hola/clipboard
-   cat /proc/aisoclip/hola/clipboard
+    echo ejemplo > /proc/aisoclip/hola/clipboard
+    cat /proc/aisoclip/hola/clipboard
 
 => ejemplo
 
-   echo 3 > /proc/aisoclip/hola/selection
-   echo ejemplo2 > /proc/aisoclip/hola/clipboard
-   cat /proc/aisoclip/hola/clipboard
+    echo 3 > /proc/aisoclip/hola/selection
+    echo ejemplo2 > /proc/aisoclip/hola/clipboard
+    cat /proc/aisoclip/hola/clipboard
 
 => ejemplo2
 
