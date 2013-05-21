@@ -27,6 +27,8 @@ El módulo cuenta con las siguientes mejoras no especificadas en el enunciado:
 
  - Se aprovecha la cola de tareas para encolar todos los mensajes de información del módulo.
  - Al separar en carpetas independientes los archivos fuente, requiere de una instalación más elaborada.
+ - Todas las entradas son manejables sin necesidad de ser super usuario
+ 
 ***
 
 Instalación

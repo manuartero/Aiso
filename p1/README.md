@@ -48,6 +48,7 @@ El módulo cuenta con las siguientes mejoras no especificadas en el enunciado:
  - Mensajes de error específicos de consola
  - Se puede leer de la entrada periodo 
  - Se puede leer de la entrada indice 
+ - Todas las entradas son manejables sin necesidad de ser super usuario
 
 ***
 
