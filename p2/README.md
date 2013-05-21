@@ -47,6 +47,8 @@ El módulo cuenta con las siguientes mejoras no especificadas en el enunciado:
  - Se avisa mediante consola al intentar borrar un módulo no existente
  - Al separar en carpetas independientes los archivos fuente, requiere de una instalación más elaborada.
 
+> Importante: Los nombres permitidos para clipboards comprenden letras minúsculas mayúsuclas y/o números pero no espacios en blanco o tabuladores
+
 ***
 
 Instalación
