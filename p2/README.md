@@ -68,7 +68,7 @@ Ejemplo de Uso
      echo hola > /proc/aisoclip/activar
      echo adios > /proc/aisoclip/activar
      echo adios > /proc/aisclip/desactivar
-     car /proc/aisoclip/monitor
+     cat /proc/aisoclip/monitor
 
 => Activo: hola
 
