@@ -2,8 +2,8 @@
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Antonio y Manu");
-module_init(manager_init);
-module_exit(manager_clean);
+module_init(my_init);
+module_exit(my_exit);
 
 /* Variables globales */
 static char *discoram;
@@ -24,7 +24,7 @@ static const struct file_operations mycdrv_fops = {
 static int __init my_init(void)
 {
 	discoram = kmalloc(discosize, GFP_KERNEL);
-	alloc_chrdev_region(first, my_minor, count, NOMBRE_DEV);
+	alloc_chrdev_region(&first, my_minor, count, NOMBRE_DEV);
 	my_cdev = cdev_alloc();
 	cdev_init(my_cdev, &mycdrv_fops);
 	cdev_add(my_cdev, first, count);

@@ -18,8 +18,8 @@ static ssize_t aiso_read(struct file *file, char __user * buf, size_t lbuf, loff
 static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbuf, loff_t * ppos);
 
 /* Funciones init exit */
-static int __init my_init(void)
-static void __exit my_exit(void)
+static int __init my_init(void);
+static void __exit my_exit(void);
 
 
 #endif /* DRIVER_H */
