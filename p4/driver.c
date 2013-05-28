@@ -11,6 +11,7 @@ static dev_t first; // acumula mayor y menor
 static unsigned int count = 1; // vamos a registrar 1
 static int my_minor = 0;
 static struct cdev *my_cdev; // la estructura del driver
+static unsigned int escrito = 0;
 
 static const struct file_operations mycdrv_fops = {
 	.owner = THIS_MODULE,
@@ -55,17 +56,24 @@ static int aiso_release(struct inode *inode, struct file *file)
 
 static ssize_t aiso_read(struct file *file, char __user * buf, size_t lbuf, loff_t * ppos)
 {
-	int nbytes = lbuf - copy_to_user(buf, discoram + *ppos, lbuf);
+	int nbytes =0;
+	
+	if (*ppos >= lbuf)
+		return 0;
+		
+	nbytes = lbuf - copy_to_user(buf, discoram + *ppos, escrito);
 	*ppos += nbytes;
     
 	printk(KERN_INFO "\n callback lectura, nbytes=%d, pos=%d\n", nbytes, (int)*ppos);
-	return nbytes;
+	return escrito;
 }
 
 static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbuf, loff_t * ppos)
 {
-	int nbytes = lbuf - copy_from_user(discoram + *ppos, buf, lbuf);//q demonios es discoram + *ppos
+	int nbytes = lbuf - copy_from_user(discoram + *ppos, buf, lbuf);//q demonios es discoram + *ppos=es para mover la posicion de memoria a la q apunta el array discoram
 	*ppos += nbytes;
+	discoram[*ppos] = '\0';
+	escrito = nbytes;
 	printk(KERN_INFO "\n callback escritura, nbytes=%d, pos=%d\n", nbytes,(int)*ppos);
 	return nbytes;
 }
