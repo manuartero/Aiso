@@ -16,6 +16,7 @@ static int aiso_open(struct inode *inode, struct file *file);
 static int aiso_release(struct inode *inode, struct file *file);
 static ssize_t aiso_read(struct file *file, char __user * buf, size_t lbuf, loff_t * ppos);
 static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbuf, loff_t * ppos);
+loff_t aiso_llseek(struct file *file, loff_t ppos, int modo);
 
 /* Funciones init exit */
 static int __init my_init(void);

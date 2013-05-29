@@ -18,6 +18,7 @@ static const struct file_operations mycdrv_fops = {
 	.read = aiso_read,
 	.write = aiso_write,
 	.open = aiso_open,
+	.llseek = aiso_llseek,
 	.release = aiso_release,
 };
 
@@ -76,5 +77,33 @@ static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbu
 	escrito = nbytes;
 	printk(KERN_INFO "\n callback escritura, nbytes=%d, pos=%d\n", nbytes,(int)*ppos);
 	return nbytes;
+}
+
+loff_t aiso_llseek(struct file *file, loff_t ppos, int modo)
+{	
+	// est alinea no estoy seguro nose bienq hacer con ella 
+	//mirar este enlace http://www.makelinux.net/ldd3/chp-3-sect-5
+    struct cdev *dev = file->private_data;
+    loff_t newppos;
+
+    switch(modo) {
+      case 0: /* posicion a la que quiero ir*/
+        newppos = ppos;
+        break;
+
+      case 1: /* posicion actual mas lo que me quiero mover */
+        newppos = file->f_pos + ppos;
+        break;
+
+      case 2: /* llevarlo al final */
+        newppos = dev->size + ppos;
+        break;
+
+      default: /* error */
+        return -EINVAL;
+    }
+    if (newppos < 0) return -EINVAL;
+    file->f_pos = newppos;
+    return newppos;
 }
 
