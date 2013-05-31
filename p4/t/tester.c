@@ -3,6 +3,13 @@
 /** Variables globales */
 char * buffer;
 
+/** Flags */
+int read_mode =   0;
+int write_mode =  0;
+int lseek_mode =  0;
+int reset_mode =  0;
+int modify_mode = 0;
+
 /**
  * Lee el fichero especificado y lo almacena en un buffer
  */
@@ -41,17 +48,40 @@ static int copiar_fichero(char *fichero)
 /** --- */
 int main (int argc, char **argv)
 {
-  int optc;
+    int optc;
   
-	// consumimos flags
-  while ((optc = getopt (argc, argv, "h")) != -1){
-    switch (optc){
-			case 'h': //TODO 
+    // consumimos flags
+    while ((optc = getopt (argc, argv, "rwlRmh")) != -1){
+        switch (optc){
+			case 'r': // READ
+                read_mode = 1; 
 				break;
-			default : // TODO
+
+            case 'w': // WRITE
+                write_mode = 1;
+                break;
+
+            case 'l': // LSEEK
+                lseek_mode = 1;
+                break;
+
+            case 'R': // RESET
+                reset_mode = 1;
+                break;
+
+            case 'm': // MODIFY
+                modify_mode = 1;
+                break;
+
+            case 'h': // HELP
+                mostrar_ayuda();
+                break;
+
+			default : // HELP
+                mostrar_ayuda();
 				break;
 		}
-  }
+    }
 
 	// optind contiene el numero de argumentos
   switch (argc - optind){
@@ -59,7 +89,7 @@ int main (int argc, char **argv)
       // TODO
       break;
 
-    case 1:	// $> test fichero
+    case 1:	// $> test opc
       copiar_fichero (argv[optind]);
       break;
 
