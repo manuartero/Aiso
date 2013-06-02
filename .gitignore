@@ -8,3 +8,16 @@
 .tmp_versions/
 *.symvers
 *.order
+
+./.git/hooks/pre-applypatch.sample
+./.git/hooks/applypatch-msg.sample
+./.git/hooks/commit-msg.sample
+./.git/hooks/post-receive.sample
+./.git/hooks/update.sample
+./.git/hooks/pre-commit.sample
+./.git/hooks/post-commit.sample
+./.git/hooks/pre-rebase.sample
+./.git/hooks/prepare-commit-msg.sample
+./.git/hooks/post-update.sample
+./p4/tester_app/tester_app
+
