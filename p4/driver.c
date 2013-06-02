@@ -6,12 +6,17 @@ module_init(aiso_init);
 module_exit(aiso_exit);
 
 /* Variables globales */
-static char *buffer;
+static char * buffer;
+static int caracteres_escritos;
+static int cabeza_lectura;
+
+static unsigned int veces_abierto;
 static dev_t num_mayor_menor; 
+int num_mayor;
 static unsigned int num_dispositivos = 1; 
 static int num_menor = 0;
-static struct cdev *driver_struct;
 static struct task_struct *kthread;
+static struct cdev * driver_struct;
 
 static const struct file_operations driver_fops = {
 	.owner = THIS_MODULE,
@@ -19,11 +24,10 @@ static const struct file_operations driver_fops = {
 	.write = aiso_write,
 	.open = aiso_open,
 	.release = aiso_release,
-    .ioctl = aiso_ioctl
+    .ioctl = aiso_ioctl,
+    .llseek = aiso_lseek,
 };
 
-static unsigned int veces_abierto;
-int num_mayor = 0;
 
 /* ********************* */
 /* Funciones init y exit */
@@ -45,6 +49,9 @@ static int __init aiso_init(void)
     // 4) inicializamos variables
     veces_abierto = 0;  
     num_mayor = MAJOR(num_mayor_menor);
+    caracteres_escritos = 0;
+    cabeza_lectura = 0;
+    buffer[cabeza_lectura] = '\0';
 
     // 5) creamos el kernel thread asociado
     kthread = kthread_run(funcion_thread, NULL, NOMBRE_THREAD);
@@ -102,44 +109,33 @@ static int aiso_release(struct inode *inode, struct file *file)
 static ssize_t aiso_read(struct file *file, char __user * buf, size_t lbuf, loff_t * ppos)
 {
 	int nbytes = 0;
-    struct cdev_ampliado * dev = file->private_data;
-
-	if (*ppos >= lbuf) {
+   
+	if (*ppos >= caracteres_escritos) {
 		return 0;
     }
 		
-	nbytes = lbuf - copy_to_user(buf, buffer + *ppos, nbytes);
-	*ppos += nbytes;
-    
-    if(copy_to_user(buf, buffer, dev->size) != 0){
-        printk(KERN_ALERT "ERROR : aiso_read => copy_to_user\n");
-        return -EFAULT;
-    }
+	memcpy(buf, buffer + cabeza_lectura, caracteres_escritos);
+	nbytes = caracteres_escritos;
+    *ppos = *ppos + caracteres_escritos;
 
-	printk(KERN_INFO "aiso_read => nbytes=%d, pos=%d\n", nbytes, (int)*ppos);
+	printk(KERN_INFO "aiso_read => nbytes=%d", nbytes);
 	return nbytes;
 }
 
 static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbuf, loff_t * ppos)
 {
 	int nbytes = 0;
-    struct cdev_ampliado * dev = file->private_data;
-
-    nbytes = lbuf - copy_from_user(buffer + *ppos, buf, lbuf);	
-    *ppos += nbytes;
+    nbytes = copy_from_user(buffer + *ppos, buf, lbuf);	
     
-    if (copy_from_user(buffer, buf, lbuf) != 0) {
-        printk(KERN_ALERT "ERROR : aiso_write => copy_from_user \n");
+    if (nbytes){
+        printk(KERN_ALERT "ERROR : aiso_write => copy_from_user \n");    
         return -EFAULT;
-    }	
+    }
 
-    buffer[(int)*ppos] = '\0';
-    if(dev->size < *ppos){
-        dev->size = *ppos;
-    }	
+    caracteres_escritos = lbuf - nbytes;
 
-	printk(KERN_INFO "aiso_write, nbytes=%d, pos=%d\n", nbytes,(int)*ppos);
-	return nbytes;
+	printk(KERN_INFO "aiso_write, caracteres_escritos=%d", caracteres_escritos);
+	return caracteres_escritos;
 }
 
 
@@ -173,7 +169,7 @@ extern int aiso_ioctl
         break;
 
         case IOCTL_RESET: 
-            aiso_reset();
+            aiso_reset(file);
         break;
 
         default: return -ENOTTY;
@@ -188,45 +184,51 @@ extern int aiso_ioctl
  * Posiciona el puntero
  *   ppos si modo == 0
  *   actual +  ppos si modo == 1
- *   final si modo == 2
+ *   inicio si modo == 2
  * @param loff_t ppos: nueva posicion (2 interpretaciones)
  * @param int modo: determina el comportamiento de ppos
  */
 static loff_t aiso_lseek(struct file *file, loff_t ppos, int modo)
 {	
-    struct cdev_ampliado *dev = file->private_data;
-    loff_t newppos;
+    loff_t nueva_pos = -1;
 
     // calculamos la nueva posicion
     switch(modo) {
         // SEEK_SET  
-        case 0: newppos = ppos;
+        case 0: nueva_pos = ppos;
         break;
         
         // SEEK_CUR
-        case 1: newppos = file->f_pos + ppos;
+        case 1: nueva_pos = file->f_pos + ppos;
         break;
     
-        // SEEK_END
-        case 2: 
-        newppos = dev->size + ppos;
+        // SEEK_START
+        case 2: nueva_pos = 0;
         break;
 
         // ERROR
         default: return -EINVAL;
     }
-    if (newppos < 0) return -EINVAL;
+    if (nueva_pos < 0) return -EINVAL;
     
     // guardamos la nueva posicion
-    file->f_pos = newppos;
-    
-    printk(KERN_INFO "LSEEK : %d\n", (int)newppos);
-    return newppos;
+    file->f_pos = nueva_pos;
+    cabeza_lectura = nueva_pos;
+
+    printk(KERN_INFO "LSEEK : %d\n", (int)nueva_pos);
+    return nueva_pos;
 }
 
-static void aiso_reset(void)
+/**
+ * Mueve la cabeza de lectura al principio 
+ * Escribe el caracter '\0'
+ */
+static void aiso_reset(struct file * fichero)
 {
-    // TODO
+    fichero->f_pos = 0;
+    cabeza_lectura = 0;
+    buffer[0] = '\0';
+    return;
 }
 
 
