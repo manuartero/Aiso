@@ -10,7 +10,6 @@
 #include <linux/kthread.h>      /* kthread */
 #include "./funciones_ioctl.h"  /* funciones ioctl */
 
-#define NOMBRE_DEV "aiso_device"
 #define NOMBRE_THREAD "driver_thread"
 #define discosize (size_t) (8*PAGE_SIZE)
 
