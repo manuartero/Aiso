@@ -3,6 +3,7 @@
 /** Variables globales */
 char * buffer;
 int fd_fichero;
+int posicion;
 
 /** Flags */
 int read_mode;
@@ -52,6 +53,7 @@ int main (int argc, char **argv)
     // Consultar tam fichero en bytes   
     stat(RUTA_FICHERO, &stat_fichero);
     tam_fichero = stat_fichero.st_size;
+    posicion = 0;
 
     // Crear un buffer de tam_fichero 
     buffer = (char *) malloc(tam_fichero);
@@ -162,7 +164,6 @@ static void mostrar_ayuda(void)
 static inline void consulta(void)
 {
     int bytes_escritos = 0;
-    int posicion = 0;
     ioctl(fd_fichero, IOCTL_WRITTEN, &bytes_escritos);
     ioctl(fd_fichero, IOCTL_POINTER, &posicion);
     printf("Escrito : %d\n", bytes_escritos);
@@ -174,8 +175,17 @@ static inline void consulta(void)
  */
 static inline void leer_fichero(void)
 {
-    int respuesta;
-	respuesta = ioctl(fd_fichero, IOCTL_READ, buffer);
+    int respuesta = 0;
+    
+    // guardamos posicion    
+    ioctl(fd_fichero, IOCTL_POINTER, &posicion);   
+
+    // leemos desde el principio del buffer
+    respuesta |= ioctl(fd_fichero, IOCTL_LSEEK, 0);
+	respuesta |= ioctl(fd_fichero, IOCTL_READ, buffer);
+
+    // restauramos el puntero de escritura
+    respuesta |= ioctl(fd_fichero, IOCTL_LSEEK, posicion);
     
     if(respuesta < 0){
 		printf("error : ejecucion, lectura fichero buffer=>%s\n", buffer);
@@ -190,6 +200,7 @@ static void reset_buffer(void)
     printf("Reset\n");
 
     respuesta = ioctl(fd_fichero, IOCTL_RESET, NULL);
+    posicion = 0;
 
     if(respuesta<0){
         printf("error : ejecucion, reset \n");
@@ -199,13 +210,14 @@ static void reset_buffer(void)
     printf("FIN Reset\n");
 }    
 
-static void lseek_fichero(int posicion)
+static void lseek_fichero(int nueva_posicion)
 {
     int respuesta;
     printf("Lseek\n");
 
-	respuesta = ioctl(fd_fichero, IOCTL_LSEEK, posicion);
-	
+	respuesta = ioctl(fd_fichero, IOCTL_LSEEK, nueva_posicion);
+	posicion = nueva_posicion;
+
     if(respuesta < 0){
 		printf("error : ejecucion, Lseek posicion=>%d\n", posicion);
         exit(-8);

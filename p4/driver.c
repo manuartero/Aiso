@@ -24,8 +24,7 @@ static const struct file_operations driver_fops = {
 	.write = aiso_write,
 	.open = aiso_open,
 	.release = aiso_release,
-    .ioctl = aiso_ioctl,
-    .llseek = aiso_lseek,
+    .ioctl = aiso_ioctl
 };
 
 
@@ -133,7 +132,7 @@ static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbu
     }
 
     caracteres_escritos = lbuf - nbytes;
-
+  
 	printk(KERN_INFO "aiso_write, caracteres_escritos=%d", caracteres_escritos);
 	return caracteres_escritos;
 }
@@ -168,10 +167,12 @@ extern int aiso_ioctl
             long_buffer = (unsigned int) strlen(buffer_entrada);
             // aiso_write(file, buffer, lon_buffer, posicion)
             aiso_write(file, (char *) ioctl_param, long_buffer, ppos);
+            cabeza_lectura += caracteres_escritos  ;          
+            aiso_lseek(file, cabeza_lectura);
             break;
 
         case IOCTL_LSEEK: 
-            aiso_lseek(file, (int) ioctl_param, 0);
+            aiso_lseek(file, (int) ioctl_param);
             break;
 
         case IOCTL_RESET: 
@@ -193,54 +194,27 @@ extern int aiso_ioctl
 }
 
 /**
- * http://www.makelinux.net/ldd3/chp-3-sect-5
- *
  * Posiciona el puntero
- *   ppos si modo == 0
- *   actual +  ppos si modo == 1
- *   inicio si modo == 2
- * @param loff_t ppos: nueva posicion (2 interpretaciones)
- * @param int modo: determina el comportamiento de ppos
  */
-static loff_t aiso_lseek(struct file *file, loff_t ppos, int modo)
+static int aiso_lseek(struct file *file, int pos)
 {	
-    loff_t nueva_pos = -1;
+    file->f_pos = pos;
+    cabeza_lectura = pos;
 
-    // calculamos la nueva posicion
-    switch(modo) {
-        // SEEK_SET  
-        case 0: nueva_pos = ppos;
-        break;
-        
-        // SEEK_CUR
-        case 1: nueva_pos = file->f_pos + ppos;
-        break;
-    
-        // SEEK_START
-        case 2: nueva_pos = 0;
-        break;
-
-        // ERROR
-        default: return -EINVAL;
-    }
-    if (nueva_pos < 0) return -EINVAL;
-    
-    // guardamos la nueva posicion
-    file->f_pos = nueva_pos;
-    cabeza_lectura = nueva_pos;
-
-    printk(KERN_INFO "LSEEK : %d\n", (int)nueva_pos);
-    return nueva_pos;
+    printk(KERN_INFO "LSEEK : %d\n", pos);
+    return pos;
 }
 
 /**
- * Mueve la cabeza de lectura al principio 
+ * Mueve la cabeza de lectura al principio
+ * Escribe 0 en caracteres_escritos 
  * Escribe el caracter '\0'
  */
 static void aiso_reset(struct file * fichero)
 {
     fichero->f_pos = 0;
     cabeza_lectura = 0;
+    caracteres_escritos = 0;
     buffer[0] = '\0';
     return;
 }

@@ -25,4 +25,4 @@ mknod /dev/$device c $major 0
 
 # cambiar los permisos
 chmod $mode /dev/$device
-
+ 

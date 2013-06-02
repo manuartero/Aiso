@@ -23,7 +23,7 @@ static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbu
 /* Funciones IOCTL */
 extern int aiso_ioctl
 (struct inode * inode, struct file * file, unsigned int ioctl_num, unsigned long ioctl_param);
-static loff_t aiso_lseek(struct file * file, loff_t ppos, int modo);
+static int aiso_lseek(struct file * file, int pos);
 static void aiso_reset(struct file * fichero);
 static void aiso_state(struct file * fichero, int * n, int mode);
 
