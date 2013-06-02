@@ -7,7 +7,7 @@
 
 #define NUM_UNICO 0xF5
 #define NOMBRE_DEV "aiso_device"
-#define RUTA_FICHERO "dev/aiso_device"
+#define RUTA_FICHERO "/dev/aiso_device"
 
 #define IOCTL_READ   _IOR(NUM_UNICO, 0, char *)
 #define IOCTL_WRITE  _IOR(NUM_UNICO, 1, char *)

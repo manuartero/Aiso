@@ -5,11 +5,20 @@ char * buffer;
 int fd_fichero;
 
 /** Flags */
-int read_mode =   0;
-int write_mode =  0;
-int lseek_mode =  0;
-int reset_mode =  0;
-int modify_mode = 0;
+int read_mode;
+int write_mode;
+int lseek_mode;
+int reset_mode;
+int modify_mode;
+
+void inline limpiar_flags(void)
+{
+    read_mode =   0;
+    write_mode =  0;
+    lseek_mode =  0;
+    reset_mode =  0;
+    modify_mode = 0;
+}
 
 /** Programa de testeo:
  * 
@@ -30,7 +39,8 @@ int main (int argc, char **argv)
     int optc;
     struct stat stat_fichero;
     int tam_fichero;
-    
+    limpiar_flags();
+
     // abrimos el fichero
     fd_fichero = open(RUTA_FICHERO, O_RDONLY);
     if (fd_fichero == -1){
@@ -41,10 +51,14 @@ int main (int argc, char **argv)
     stat(RUTA_FICHERO, &stat_fichero);
     tam_fichero = stat_fichero.st_size;
 
-    // Crear un buffer de tam_fichero
+    // Crear un buffer de tam_fichero 
     buffer = (char *) malloc(tam_fichero);
     if(buffer==NULL){
         perror ("error : inicio, malloc"),exit(-2);
+    }
+    
+    if(argc == 1){
+        read_mode = 1;
     }
 
     // Consumimos flags
@@ -142,7 +156,7 @@ static void leer_fichero(void)
     int respuesta;
     printf("Lectura\n"); 
 
-	respuesta = ioctl(fd_fichero, IOCTL_READ, &buffer);
+	respuesta = ioctl(fd_fichero, IOCTL_READ, buffer);
 	
     if(respuesta < 0){
 		printf("error : ejecucion, lectura fichero buffer=>%s\n", buffer);

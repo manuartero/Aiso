@@ -6,11 +6,12 @@
 
 module="p4"
 device="aiso_device"
-mode="664"
+mode="766"
 
-# TODO if
 # desistalar modulo previo
-# /sbin/rmmod $module
+if lsmod | grep -q $module; then
+    /sbin/rmmod $module
+fi 
 
 # instalar el modulo
 /sbin/insmod ./$module.ko

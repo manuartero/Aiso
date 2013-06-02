@@ -146,22 +146,33 @@ static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbu
 extern int aiso_ioctl
 (struct inode * inode, struct file * file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
-    int char_leidos = 0;
-    char * ultima_pos = 0;
-    char * buffer_entrada = NULL;
-    unsigned int long_buffer = 0;
+    int char_leidos;
+    loff_t * ppos = vmalloc(sizeof(int));
+    char * buffer_entrada;
+    unsigned int long_buffer;
+
+    char_leidos = 0;    
+    *ppos = 0;
+    buffer_entrada = NULL;
+    long_buffer = 0;
 
     switch(ioctl_num){
         case IOCTL_READ: 
-            char_leidos = aiso_read(file, (char *) ioctl_param, discosize, 0);
-            ultima_pos = (char *) ioctl_param + char_leidos;
-            put_user('\0', ultima_pos);
+            // aiso_read(file, buffer, lon_buffer, posicion)
+            char_leidos = aiso_read(file, (char *) ioctl_param, discosize, ppos);
+            put_user('\0', (char *) ioctl_param + char_leidos);
         break;
 
         case IOCTL_WRITE:
             buffer_entrada = (char *) ioctl_param;
+            /*            
+            get_user(c, buffer_entrada);
+            for(char_leidos=0; c && char_leidos<discosize; char_leidos++, buffer_entrada++){
+                get_user(c, buffer_entrada);
+            }
+            */
             long_buffer = (unsigned int) strlen(buffer_entrada);
-            aiso_write(file, (char *) ioctl_param, long_buffer, 0);
+            aiso_write(file, (char *) ioctl_param, long_buffer, ppos);
         break;
 
         case IOCTL_LSEEK: 

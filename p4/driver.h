@@ -6,6 +6,7 @@
 #include <linux/uaccess.h>	    /* copy_to_user, copy_from_user */
 #include <linux/init.h>		    /* module_init, module_exit */
 #include <linux/slab.h>		    /* kmalloc */
+#include <linux/vmalloc.h>      /* vmalloc */
 #include <linux/cdev.h>		    /* cdev */
 #include <linux/kthread.h>      /* kthread */
 #include "./funciones_ioctl.h"  /* funciones ioctl */

@@ -10,4 +10,4 @@ obj: tester.o
 
 clean:
 	-rm -f tester.o
-	-rm -f tester
+	-rm -f tester_app
