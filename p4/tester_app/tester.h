@@ -12,12 +12,13 @@
 #include "../funciones_ioctl.h" /* funciones ioctl */
 
 /* Declaracion de funciones */
-static void leer_fichero(void);            
+static inline void leer_fichero(void);            
 static void reset_buffer(void);    
-static void escribir_fichero(char * texto);
+static inline void escribir_fichero(char * texto);
 static void modificar_buffer(int cantidad);
 static void lseek_fichero(int posicion);
 static void mostrar_ayuda(void);
+static inline void consulta(void);
 
 int main (int argc, char **argv);
 

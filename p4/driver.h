@@ -25,6 +25,7 @@ extern int aiso_ioctl
 (struct inode * inode, struct file * file, unsigned int ioctl_num, unsigned long ioctl_param);
 static loff_t aiso_lseek(struct file * file, loff_t ppos, int modo);
 static void aiso_reset(struct file * fichero);
+static void aiso_state(struct file * fichero, int * n, int mode);
 
 /* Funciones init exit */
 static int __init aiso_init(void);

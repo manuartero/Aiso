@@ -7,8 +7,8 @@ module_exit(aiso_exit);
 
 /* Variables globales */
 static char * buffer;
-static int caracteres_escritos;
-static int cabeza_lectura;
+int caracteres_escritos;
+int cabeza_lectura;
 
 static unsigned int veces_abierto;
 static dev_t num_mayor_menor; 
@@ -158,30 +158,33 @@ extern int aiso_ioctl
 
     switch(ioctl_num){
         case IOCTL_READ: 
-            // aiso_read(file, buffer, lon_buffer, posicion)
+            //            aiso_read(file, buffer, lon_buffer, posicion)
             char_leidos = aiso_read(file, (char *) ioctl_param, discosize, ppos);
             put_user('\0', (char *) ioctl_param + char_leidos);
-        break;
+            break;
 
         case IOCTL_WRITE:
             buffer_entrada = (char *) ioctl_param;
-            /*            
-            get_user(c, buffer_entrada);
-            for(char_leidos=0; c && char_leidos<discosize; char_leidos++, buffer_entrada++){
-                get_user(c, buffer_entrada);
-            }
-            */
             long_buffer = (unsigned int) strlen(buffer_entrada);
+            // aiso_write(file, buffer, lon_buffer, posicion)
             aiso_write(file, (char *) ioctl_param, long_buffer, ppos);
-        break;
+            break;
 
         case IOCTL_LSEEK: 
             aiso_lseek(file, (int) ioctl_param, 0);
-        break;
+            break;
 
         case IOCTL_RESET: 
             aiso_reset(file);
-        break;
+            break;
+
+        case IOCTL_WRITTEN:
+            aiso_state(file, (int *) ioctl_param, 2);
+            break;
+
+        case IOCTL_POINTER:
+            aiso_state(file, (int *) ioctl_param, 1);
+            break;
 
         default: return -ENOTTY;
     }
@@ -242,6 +245,20 @@ static void aiso_reset(struct file * fichero)
     return;
 }
 
+/**
+ * Guarda en n el numero consultado
+ * mode == 1 : cabeza_lectura
+ * mode == 2 : caracteres_escritos (default)
+ */
+static void aiso_state(struct file * fichero, int * n, int mode)
+{
+    if(mode == 1){
+        *n = cabeza_lectura;
+    } else { 
+        *n = caracteres_escritos;
+    }
+    return;
+}
 
 /* **************************** */
 /* Funcion del kthread asociado */

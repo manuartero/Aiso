@@ -10,6 +10,7 @@ int write_mode;
 int lseek_mode;
 int reset_mode;
 int modify_mode;
+int no_flag;
 
 void inline limpiar_flags(void)
 {
@@ -18,6 +19,7 @@ void inline limpiar_flags(void)
     lseek_mode =  0;
     reset_mode =  0;
     modify_mode = 0;
+    no_flag = 0;
 }
 
 /** Programa de testeo:
@@ -58,7 +60,7 @@ int main (int argc, char **argv)
     }
     
     if(argc == 1){
-        read_mode = 1;
+        no_flag = 1;
     }
 
     // Consumimos flags
@@ -88,8 +90,8 @@ int main (int argc, char **argv)
                 mostrar_ayuda();
                 break;
 
-			default : // READ
-                read_mode = 1;
+			default : // STAT
+                no_flag = 1;
 				break;
 		}
     }
@@ -97,7 +99,9 @@ int main (int argc, char **argv)
     // optind contiene el numero de argumentos no flags
     switch (argc - optind){
         case 0:	// $> test [opciones] 
-            if(read_mode){
+            if(no_flag){
+                consulta();
+            } else if(read_mode){
                 leer_fichero();            
             } else if(reset_mode) {
                 reset_buffer();    
@@ -142,28 +146,42 @@ int main (int argc, char **argv)
 static void mostrar_ayuda(void)
 {
     printf("uso: [OPCIONES] [ARGUMENTO]\n");
-    printf("./app : leer el fichero\n");
-    printf("./app -r : Leer el fichero\n");
-    printf("./app -R : Reset el buffer\n");
-    printf("./app -l : Posiciona la cabeza al incio\n");
-    printf("./app -l {numero} : Posiciona la cabeza a la posicion indicada\n");
-    printf("./app -w {cadena} : Escribe la cadeana en el fichero\n");
-    printf("./app -m {numero} : Modifica el buffer al tam indicado \n");   
+    printf("./tester_app : consulta el numero de caracteres escritos \n");
+    printf("./tester_app -r : Leer el fichero\n");
+    printf("./tester_app -R : Reset el buffer\n");
+    printf("./tester_app -l : Posiciona la cabeza al incio\n");
+    printf("./tester_app -l {numero} : Posiciona la cabeza a la posicion indicada\n");
+    printf("./tester_app -w {cadena} : Escribe la cadeana en el fichero\n");
+    printf("./tester_app -m {numero} : Modifica el buffer al tam indicado \n");   
+    printf("------------------------------------------------------------- \n");
 }
-    
-static void leer_fichero(void)
+
+/**
+ * Imprime el numero de caracteres escritos en el fichero
+ */    
+static inline void consulta(void)
+{
+    int bytes_escritos = 0;
+    int posicion = 0;
+    ioctl(fd_fichero, IOCTL_WRITTEN, &bytes_escritos);
+    ioctl(fd_fichero, IOCTL_POINTER, &posicion);
+    printf("Escrito : %d\n", bytes_escritos);
+    printf("Puntero : %d\n", posicion);
+}
+
+/** 
+ * Imprime el fichero
+ */
+static inline void leer_fichero(void)
 {
     int respuesta;
-    printf("Lectura\n"); 
-
 	respuesta = ioctl(fd_fichero, IOCTL_READ, buffer);
-	
+    
     if(respuesta < 0){
 		printf("error : ejecucion, lectura fichero buffer=>%s\n", buffer);
         exit(-7);
-	}
-	
-    printf("FIN Lectura\n");
+	}	
+    printf("%s\n", buffer);
 }           
 
 static void reset_buffer(void)
@@ -196,19 +214,18 @@ static void lseek_fichero(int posicion)
 	printf("FIN Lseek\n");
 }
 
-static void escribir_fichero(char * texto)
+/**
+ * Escribe el texto de entrada en el fichero
+ */
+static inline void escribir_fichero(char * texto)
 {
     int respuesta;
-    printf("Escritura\n");    
-    
     respuesta = ioctl(fd_fichero, IOCTL_WRITE, texto);
 	
     if(respuesta < 0){
 		printf("error : ejecucion, escribir fichero texto=>%s\n", texto);
         exit(-6);
 	}
-
-	printf("FIN Escritura\n");
 }
 
 static void modificar_buffer(int cantidad)
@@ -225,17 +242,4 @@ static void modificar_buffer(int cantidad)
 
 	printf("FIN Modificar\n");
 }
-
-/*
-static int copiar_fichero(char *fichero) 
-{
- // Leer el fichero: almacenar en buffer
-  tam = read(fd_fichero, buffer, tam_total);
-  if (tam==-1){
-    perror("error : read"), exit(-3);
-  }
-
-  return 0;
-}
-*/
 
