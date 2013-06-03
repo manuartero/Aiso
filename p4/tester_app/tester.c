@@ -269,8 +269,9 @@ static inline void lseek_fichero(int nueva_posicion,int modo)
 static inline void escribir_fichero(char * texto)
 {
     int respuesta;
-    respuesta = ioctl(fd_fichero, IOCTL_WRITE, texto);
-	
+    //respuesta = ioctl(fd_fichero, IOCTL_WRITE, texto);
+    respuesta = write(fd_fichero,texto,1);
+
     if(respuesta < 0){
 		printf("error : ejecucion, escribir fichero texto=>%s\n", texto);
         exit(-6);

@@ -10,6 +10,7 @@
 #include <err.h>                /* perror */
 #include <getopt.h>             /* getopt */
 #include "../funciones_ioctl.h" /* funciones ioctl */
+#include <string.h>
 
 /* Declaracion de funciones */
 static int leer_fichero(void);            

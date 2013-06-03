@@ -26,6 +26,7 @@ static const struct file_operations driver_fops = {
 	.write = aiso_write,
 	.open = aiso_open,
 	.release = aiso_release,
+    .llseek = aiso_lseek,
     .ioctl = aiso_ioctl
 };
 
@@ -129,6 +130,7 @@ static ssize_t aiso_read(struct file *file, char __user * buf, size_t lbuf, loff
 static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbuf, loff_t * ppos)
 {
 	int nbytes = 0;
+    printk(KERN_INFO "hola q ace\n");
     nbytes = copy_from_user(buffer + file->f_pos, buf, lbuf);	
     
     if (nbytes){
@@ -136,8 +138,14 @@ static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbu
         return -EFAULT;
     }
 	
-    caracteres_escritos_tmp = lbuf - nbytes;
+    
+    caracteres_escritos_tmp= lbuf - nbytes;
+
+    cabeza_lectura += caracteres_escritos_tmp; 
+    caracteres_escritos += caracteres_escritos_tmp;         
+    file->f_pos += caracteres_escritos_tmp ;
   
+    
 	printk(KERN_INFO "aiso_write, caracteres_escritos tmp=%d", caracteres_escritos_tmp);
 	return caracteres_escritos_tmp;
 }
