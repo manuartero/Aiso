@@ -25,7 +25,8 @@ static const struct file_operations driver_fops = {
 	.write = aiso_write,
 	.open = aiso_open,
 	.release = aiso_release,
-    .ioctl = aiso_ioctl
+    .ioctl = aiso_ioctl,
+    .llseek = aiso_lseek
 };
 
 
