@@ -8,6 +8,7 @@ module_exit(aiso_exit);
 /* Variables globales */
 static char * buffer;
 int caracteres_escritos;
+int caracteres_escritos_tmp;
 int cabeza_lectura;
 
 static unsigned int veces_abierto;
@@ -49,6 +50,7 @@ static int __init aiso_init(void)
     veces_abierto = 0;  
     num_mayor = MAJOR(num_mayor_menor);
     caracteres_escritos = 0;
+    caracteres_escritos_tmp = 0;
     cabeza_lectura = 0;
     buffer[cabeza_lectura] = '\0';
 
@@ -90,6 +92,7 @@ static void __exit aiso_exit(void)
 static int aiso_open(struct inode *inode, struct file *file)
 {
     veces_abierto++;	
+    file->f_pos = cabeza_lectura;
     wake_up_process(kthread);
     return 0;
 }
@@ -124,17 +127,17 @@ static ssize_t aiso_read(struct file *file, char __user * buf, size_t lbuf, loff
 static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbuf, loff_t * ppos)
 {
 	int nbytes = 0;
-    nbytes = copy_from_user(buffer + *ppos, buf, lbuf);	
+    nbytes = copy_from_user(buffer + file->f_pos, buf, lbuf);	
     
     if (nbytes){
         printk(KERN_ALERT "ERROR : aiso_write => copy_from_user \n");    
         return -EFAULT;
     }
-
-    caracteres_escritos = lbuf - nbytes;
+	
+    caracteres_escritos_tmp = lbuf - nbytes;
   
-	printk(KERN_INFO "aiso_write, caracteres_escritos=%d", caracteres_escritos);
-	return caracteres_escritos;
+	printk(KERN_INFO "aiso_write, caracteres_escritos tmp=%d", caracteres_escritos_tmp);
+	return caracteres_escritos_tmp;
 }
 
 
@@ -167,12 +170,21 @@ extern int aiso_ioctl
             long_buffer = (unsigned int) strlen(buffer_entrada);
             // aiso_write(file, buffer, lon_buffer, posicion)
             aiso_write(file, (char *) ioctl_param, long_buffer, ppos);
-            cabeza_lectura += caracteres_escritos  ;          
-            aiso_lseek(file, cabeza_lectura);
+            cabeza_lectura += caracteres_escritos_tmp  ; 
+            caracteres_escritos += caracteres_escritos_tmp;         
+            file->f_pos += caracteres_escritos_tmp ;
             break;
 
-        case IOCTL_LSEEK: 
-            aiso_lseek(file, (int) ioctl_param);
+        case IOCTL_LSEEK_SET: 
+            return aiso_lseek(file, (int) ioctl_param,0);
+            break;
+            
+        case IOCTL_LSEEK_CURR: 
+            return aiso_lseek(file, (int) ioctl_param,1);
+            break;
+            
+        case IOCTL_LSEEK_END: 
+            return aiso_lseek(file, (int) ioctl_param,2);
             break;
 
         case IOCTL_RESET: 
@@ -196,13 +208,35 @@ extern int aiso_ioctl
 /**
  * Posiciona el puntero
  */
-static int aiso_lseek(struct file *file, int pos)
+static int aiso_lseek(struct file *file, loff_t pos,int whence)
 {	
-    file->f_pos = pos;
-    cabeza_lectura = pos;
+/*    file->f_pos += pos;*/
+/*    cabeza_lectura = pos;*/
 
-    printk(KERN_INFO "LSEEK : %d\n", pos);
-    return pos;
+/*    printk(KERN_INFO "LSEEK : %d\n", file->f_pos);*/
+/*    return pos;*/
+	loff_t newpos;
+
+	switch(whence) {
+	  case 0: /* SEEK_SET */
+		newpos = pos;
+		break;
+
+	  case 1: /* SEEK_CUR */
+		newpos = file->f_pos + pos;
+		break;
+
+	  case 2: /* SEEK_END */
+		newpos = discosize + pos;
+		break;
+
+	  default: /* can't happen */
+		return -EINVAL;
+	}
+	if (newpos < 0) return -EINVAL;
+	file->f_pos = newpos;
+	cabeza_lectura = newpos;
+	return newpos;
 }
 
 /**

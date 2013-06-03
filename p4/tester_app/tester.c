@@ -8,7 +8,9 @@ int posicion;
 /** Flags */
 int read_mode;
 int write_mode;
-int lseek_mode;
+int lseek_set;
+int lseek_curr;
+int lseek_end;
 int reset_mode;
 int modify_mode;
 int no_flag;
@@ -17,7 +19,9 @@ void inline limpiar_flags(void)
 {
     read_mode =   0;
     write_mode =  0;
-    lseek_mode =  0;
+    lseek_set =  0;
+    lseek_curr = 0;
+    lseek_end = 0;
     reset_mode =  0;
     modify_mode = 0;
     no_flag = 0;
@@ -31,8 +35,9 @@ void inline limpiar_flags(void)
  *      ./app -r
  *      ./app -R
  *      ./app -h
- *      ./app -l
- *      ./app -l numero
+ *      ./app -s {numero}
+ *		./app -c {numero}
+ *		./app -e {numero}
  *      ./app -w cadena
  *      ./app -m numero
  * 4) cierra el fichero
@@ -66,7 +71,7 @@ int main (int argc, char **argv)
     }
 
     // Consumimos flags
-    while ((optc = getopt (argc, argv, "rwlRmh")) != -1){
+    while ((optc = getopt (argc, argv, "rwsceRmh")) != -1){
         switch (optc){
 			case 'r': // READ
                 read_mode = 1;
@@ -76,10 +81,18 @@ int main (int argc, char **argv)
                 write_mode = 1;
                 break;
 
-            case 'l': // LSEEK
-                lseek_mode = 1;
+            case 's': // LSEEK seek_set
+                lseek_set = 1;
                 break;
-
+			
+			case 'c': // lSEEK seek_curr
+				lseek_curr = 1;
+				break;
+			
+			case 'e': //LSEEK seek_end
+				lseek_end = 1;
+				break;
+				
             case 'R': // RESET
                 reset_mode = 1;
                 break;
@@ -107,9 +120,13 @@ int main (int argc, char **argv)
                 leer_fichero();            
             } else if(reset_mode) {
                 reset_buffer();    
-            } else if(lseek_mode){
-                lseek_fichero(0);
-            } else {
+            } else if(lseek_set){
+                lseek_fichero(0,0);
+            } else if(lseek_curr){
+                lseek_fichero(0,1);
+            }else if(lseek_end){
+                lseek_fichero(0,2);
+            }else {
                 warnx("opcion incorrecta \n");
                 exit(-3);
             }
@@ -120,9 +137,13 @@ int main (int argc, char **argv)
                 escribir_fichero(argv[2]);
             } else if (modify_mode) {
                 modificar_buffer((int) argv[2]);
-            } else if (lseek_mode) {
-                lseek_fichero((int) argv[2]);
-            } else {
+            } else if (lseek_set) {
+                lseek_fichero((int) atoi(argv[2]),0);
+            }else if (lseek_curr) {
+                lseek_fichero((int) atoi(argv[2]),1);
+            }else if (lseek_end) {
+                lseek_fichero((int) atoi(argv[2]),2);
+            }else {
                 warnx("opcion incorrecta \n");
                 exit(-4);
             };
@@ -151,8 +172,10 @@ static void mostrar_ayuda(void)
     printf("./tester_app : consulta el numero de caracteres escritos \n");
     printf("./tester_app -r : Leer el fichero\n");
     printf("./tester_app -R : Reset el buffer\n");
-    printf("./tester_app -l : Posiciona la cabeza al incio\n");
-    printf("./tester_app -l {numero} : Posiciona la cabeza a la posicion indicada\n");
+   // printf("./tester_app -l : Posiciona la cabeza al incio\n");
+    printf("./tester_app -s {numero} : Posiciona la cabeza a la posicion indicada\n");
+    printf("./tester_app -c {numero} : Posiciona la cabeza a la posicion actual mas la posicion indicada\n");
+    printf("./tester_app -e {numero} : Posiciona la cabeza al final mas la posicion indicada\n");
     printf("./tester_app -w {cadena} : Escribe la cadeana en el fichero\n");
     printf("./tester_app -m {numero} : Modifica el buffer al tam indicado \n");   
     printf("------------------------------------------------------------- \n");
@@ -181,11 +204,11 @@ static inline void leer_fichero(void)
     ioctl(fd_fichero, IOCTL_POINTER, &posicion);   
 
     // leemos desde el principio del buffer
-    respuesta |= ioctl(fd_fichero, IOCTL_LSEEK, 0);
+    respuesta |= ioctl(fd_fichero, IOCTL_LSEEK_SET, 0);
 	respuesta |= ioctl(fd_fichero, IOCTL_READ, buffer);
 
     // restauramos el puntero de escritura
-    respuesta |= ioctl(fd_fichero, IOCTL_LSEEK, posicion);
+    respuesta |= ioctl(fd_fichero, IOCTL_LSEEK_SET, posicion);
     
     if(respuesta < 0){
 		printf("error : ejecucion, lectura fichero buffer=>%s\n", buffer);
@@ -210,19 +233,33 @@ static void reset_buffer(void)
     printf("FIN Reset\n");
 }    
 
-static void lseek_fichero(int nueva_posicion)
+static void lseek_fichero(int nueva_posicion,int modo)
 {
-    int respuesta;
+	int respuesta;
     printf("Lseek\n");
-
-	respuesta = ioctl(fd_fichero, IOCTL_LSEEK, nueva_posicion);
-	posicion = nueva_posicion;
-
+	
+	switch(modo){
+		case 0:
+				
+			respuesta = ioctl(fd_fichero, IOCTL_LSEEK_SET, nueva_posicion);
+			break;
+		
+		case 1:
+			respuesta = ioctl(fd_fichero, IOCTL_LSEEK_CURR, nueva_posicion);
+			break;
+			
+		case 2:
+			respuesta = ioctl(fd_fichero, IOCTL_LSEEK_END, nueva_posicion);
+			break;
+		
+		default: exit(-8);
+	}
+	
     if(respuesta < 0){
 		printf("error : ejecucion, Lseek posicion=>%d\n", posicion);
         exit(-8);
 	}
-
+	printf("nueva_posicion %d\n",respuesta);
 	printf("FIN Lseek\n");
 }
 

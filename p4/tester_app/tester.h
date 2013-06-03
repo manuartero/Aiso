@@ -16,7 +16,7 @@ static inline void leer_fichero(void);
 static void reset_buffer(void);    
 static inline void escribir_fichero(char * texto);
 static void modificar_buffer(int cantidad);
-static void lseek_fichero(int posicion);
+static void lseek_fichero(int posicion,int modo);
 static void mostrar_ayuda(void);
 static inline void consulta(void);
 
