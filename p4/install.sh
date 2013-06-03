@@ -20,8 +20,8 @@ fi
 major=$(awk "\$2==\"$device\" {print \$1}" /proc/devices)
 
 # crear dispositvo en /dev
-rm -f /dev/$device
-mknod /dev/$device c $major 0
+# rm -f /dev/$device
+# mknod /dev/$device c $major 0
 
 # cambiar los permisos
 chmod $mode /dev/$device
