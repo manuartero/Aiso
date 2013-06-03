@@ -136,7 +136,7 @@ int main (int argc, char **argv)
             if(write_mode){
                 escribir_fichero(argv[2]);
             } else if (modify_mode) {
-                modificar_buffer((int) argv[2]);
+                modificar_buffer((int) atoi(argv[2]));
             } else if (lseek_set) {
                 lseek_fichero((int) atoi(argv[2]),0);
             }else if (lseek_curr) {
@@ -196,7 +196,7 @@ static inline void consulta(void)
 /** 
  * Imprime el fichero
  */
-static inline void leer_fichero(void)
+static int leer_fichero(void)
 {
     int respuesta = 0;
     
@@ -214,14 +214,15 @@ static inline void leer_fichero(void)
 		printf("error : ejecucion, lectura fichero buffer=>%s\n", buffer);
         exit(-7);
 	}	
+
     printf("%s\n", buffer);
+    return respuesta;
 }           
 
-static void reset_buffer(void)
+static inline void reset_buffer(void)
 {
     int respuesta;
-    printf("Reset\n");
-
+    
     respuesta = ioctl(fd_fichero, IOCTL_RESET, NULL);
     posicion = 0;
 
@@ -230,17 +231,15 @@ static void reset_buffer(void)
         exit(-9);
     }
 
-    printf("FIN Reset\n");
+    return;
 }    
 
-static void lseek_fichero(int nueva_posicion,int modo)
+static inline void lseek_fichero(int nueva_posicion,int modo)
 {
 	int respuesta;
-    printf("Lseek\n");
-	
+   
 	switch(modo){
-		case 0:
-				
+		case 0:		
 			respuesta = ioctl(fd_fichero, IOCTL_LSEEK_SET, nueva_posicion);
 			break;
 		
@@ -259,8 +258,9 @@ static void lseek_fichero(int nueva_posicion,int modo)
 		printf("error : ejecucion, Lseek posicion=>%d\n", posicion);
         exit(-8);
 	}
-	printf("nueva_posicion %d\n",respuesta);
-	printf("FIN Lseek\n");
+	
+    printf("nueva_posicion %d\n",respuesta);
+    return;	
 }
 
 /**
@@ -275,13 +275,13 @@ static inline void escribir_fichero(char * texto)
 		printf("error : ejecucion, escribir fichero texto=>%s\n", texto);
         exit(-6);
 	}
+
+    return;
 }
 
-static void modificar_buffer(int cantidad)
+static inline void modificar_buffer(int cantidad)
 {
     int respuesta;
-    printf("Modificar\n");    
-    
     respuesta = ioctl(fd_fichero, IOCTL_MODIFY, cantidad);
 	
     if(respuesta < 0){
@@ -289,6 +289,6 @@ static void modificar_buffer(int cantidad)
         exit(-10);
 	}
 
-	printf("FIN Modificar\n");
+	return;
 }
 

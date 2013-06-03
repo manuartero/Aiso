@@ -12,7 +12,7 @@
 #include "./funciones_ioctl.h"  /* funciones ioctl */
 
 #define NOMBRE_THREAD "driver_thread"
-#define discosize (size_t) (8*PAGE_SIZE)
+
 
 /* Funciones file_operations */
 static int aiso_open(struct inode *inode, struct file *file);
@@ -26,6 +26,7 @@ extern int aiso_ioctl
 static int aiso_lseek(struct file *file, loff_t pos,int whence);
 static void aiso_reset(struct file * fichero);
 static void aiso_state(struct file * fichero, int * n, int mode);
+static int aiso_modify(struct file * fichero, size_t nueva_cantidad);
 
 /* Funciones init exit */
 static int __init aiso_init(void);

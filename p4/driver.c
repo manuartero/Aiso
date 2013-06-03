@@ -10,6 +10,7 @@ static char * buffer;
 int caracteres_escritos;
 int caracteres_escritos_tmp;
 int cabeza_lectura;
+size_t discosize;
 
 static unsigned int veces_abierto;
 static dev_t num_mayor_menor; 
@@ -25,8 +26,7 @@ static const struct file_operations driver_fops = {
 	.write = aiso_write,
 	.open = aiso_open,
 	.release = aiso_release,
-    .ioctl = aiso_ioctl,
-    .llseek = aiso_lseek
+    .ioctl = aiso_ioctl
 };
 
 
@@ -36,6 +36,7 @@ static const struct file_operations driver_fops = {
 
 static int __init aiso_init(void)
 {
+    discosize = (size_t) (8*PAGE_SIZE);
     // 1) reservamos memoria para el buffer	
     buffer = kmalloc(discosize, GFP_KERNEL);
     
@@ -200,6 +201,10 @@ extern int aiso_ioctl
             aiso_state(file, (int *) ioctl_param, 1);
             break;
 
+        case IOCTL_MODIFY:
+            return aiso_modify(file, (int) ioctl_param);
+            break;
+
         default: return -ENOTTY;
     }
 
@@ -252,6 +257,31 @@ static void aiso_reset(struct file * fichero)
     caracteres_escritos = 0;
     buffer[0] = '\0';
     return;
+}
+
+/**
+ * Modifica el tam del buffer
+ * Implicitamente hace Reset
+ */
+static int aiso_modify(struct file * fichero, size_t nueva_cantidad)
+{
+    // 1) Liberamos el buffer actual
+    kfree(buffer);
+
+    discosize = nueva_cantidad;
+    // 2) Reservamos un nuevo buffer	
+    buffer = kmalloc(discosize, GFP_KERNEL);
+
+    // 3) Reseteamos el valor de las variables
+    caracteres_escritos = 0;
+    caracteres_escritos_tmp = 0;
+    cabeza_lectura = 0;
+    buffer[cabeza_lectura] = '\0';
+
+    if(buffer == NULL){
+        return -1;
+    }
+    return 0;
 }
 
 /**
