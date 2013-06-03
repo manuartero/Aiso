@@ -37,9 +37,10 @@ static const struct file_operations driver_fops = {
 Cuenta con un kernel thread asociado que cuenta la cantidad de veces que el fichero ha sido abierto e imprime el valor en el log del kernel.
 
 El registro del número mayor se hace de forma dinámica mediante la funciones  
-```int alloc_chrdev_region (dev_t * dev, unsigned baseminor, unsigned count, const char * name); ```  
-POR HACER
- 
+```int alloc_chrdev_region (dev_t * dev, unsigned baseminor, unsigned count, const char * name); ```
+```struct class *class_create(struct module *owner, const char *name); ```  
+```struct device *device_create (struct class *cls, struct device *parent, dev_t devt, const char *fmt)```  
+
 ### Otros aspectos relevantes
 
  - El kernel thread se ha implementado evitando la espera activa. El proceso se duerme hasta que es despertado en la llamada de la función ___open___ del fichero.
