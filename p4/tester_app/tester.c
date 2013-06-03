@@ -228,26 +228,12 @@ static inline void reset_buffer(void)
 
 static inline void lseek_fichero(int nueva_posicion,int modo)
 {
-	int respuesta;
+	int respuesta = 0;
    
-	switch(modo){
-		case 0:		
-			respuesta = ioctl(fd_fichero, IOCTL_LSEEK_SET, nueva_posicion);
-			break;
+   	respuesta = lseek(fd_fichero,nueva_posicion,modo);
 		
-		case 1:
-			respuesta = ioctl(fd_fichero, IOCTL_LSEEK_CURR, nueva_posicion);
-			break;
-			
-		case 2:
-			respuesta = ioctl(fd_fichero, IOCTL_LSEEK_END, nueva_posicion);
-			break;
-		
-		default: exit(-8);
-	}
-	
     if(respuesta < 0){
-		printf("error : ejecucion, Lseek posicion=>%d\n", posicion);
+		printf("error : ejecucion, Lseek posicion=>%d \n", posicion);
         exit(-8);
 	}
 	
