@@ -4,9 +4,9 @@ Práctica 4 - Driver de caracteres
 Índice
 ------
 
-1) [Funcionalidad] (#Funcionalidad)
-2) [Instalación] (#Instalación)
-3) [Uso] (#Uso)
+1) [Funcionalidad] (#funcionalidad)  
+2) [Instalación] (#instalacin)  
+3) [Uso] (#uso)  
 
 ***
 
@@ -15,11 +15,11 @@ Funcionalidad
 
 Driver de caracteres que define las siguientes operaciones
 
- 1) Apertura del fichero ```/dev/aiso_device``` 
- 2) Escritura y lectura 
- 3) Posicionamiento del puntero de lectura (mediante posición absoluta o relativa)
- 4) Reset del buffer del fichero (IOCTL)
- 5) Cambio del tamaño del buffer de almacenamiento (IOCTL)
+ 1) Apertura del fichero ```/dev/aiso_device```  
+ 2) Escritura y lectura  
+ 3) Posicionamiento del puntero de lectura (mediante posición absoluta o relativa)  
+ 4) Reset del buffer del fichero (IOCTL)  
+ 5) Cambio del tamaño del buffer de almacenamiento (IOCTL)  
  
 La estructura ```file_operations``` que define las operaciones definidas es la siguiente:
 
@@ -71,10 +71,52 @@ Se encuentra en la carpeta *tester_app*. Una vez en la carpeta de la aplicación
 
 ### Sobre el programa de pruebas
 
-POR HACER
+El programa de testeo está implementado en C.
+Permite hacer uso de todas las funciones implementeadas en el driver y ver los resultados de forma clara y directa.
+
+El programa dispone de los siguientes flags
+
+| Flag    | Llamada                | Funcionalidad          |
+|:-------:|:-----------------------|:-----------------------|
+| Ninguno | ./tester_app           | Muestra los caracteres escritos y la posición de la cabecera |
+| r       | ./tester_app -r {num}  | Lee el fichero {num} posiciones desde la cabecera |
+| w       | ./tester_app -w {cadena} | Escribe la {cadena} de entrada en el fichero |
+| s       | ./tester_app -s        | Posiciona la cabecera de lectura al principio del fichero |
+| s       | ./tester_app -s {num}  | Posiciona la cabecera de lectura en la posición absoluta indicada |
+| c       | ./tester_app -c {num}  | Posiciona la cabecera de lectura en la posición relativa indicada |
+| e       | ./tester_app -e        | Posiciona la cabecera de lectura al final del fichero |
+| m       | ./tester_app -m {num}  | Cambia el tamaño del buffer por la cantidad indicada |
+| R       | ./tester_app -R        | Borra el contenido del buffer y posiciona la cabeza al principio |
+| h       | ./tester_app -h        | Muestra la ayuda del programa |
+
+> Nota: el programa abre el archivo *open* al inicio de la función ___main___
 
 ### Ejemplo de uso del programa tester_app
 
-POR HACER
+A continucación se muestra un ejemplo sencillo de uso del programa
 
+``` 
+/Aiso/p4/tester_app $> ./tester_app  
+> caracteres escritos: 0  
+> posicion de la cabeza: 0
+  
+/Aiso/p4/tester_app $> ./tester_app -w "hola hola"  
+
+/Aiso/p4/tester_app $> ./tester_app  
+> caracteres escritos: 9  
+> posicion de la cabeza: 9
+
+/Aiso/p4/tester_app $> ./tester_app -s
+
+/Aiso/p4/tester_app $> ./tester_app -r 4  
+hola
+
+/Aiso/p4/tester_app $> ./tester_app -R
+
+/Aiso/p4/tester_app $> ./tester_app  
+> caracteres escritos: 0  
+> posicion de la cabeza: 0  
+```
+
+***
 
