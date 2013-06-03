@@ -48,7 +48,7 @@ El registro del número mayor se hace de forma dinámica mediante la función ``
 
  - *IOCTL_POINTER* Devuelve la posición actual del puntero de lectura
 
- - POR HACER
+ - El script de instalación del driver tiene en cuenta si es necesario desistalar un módulo previo con el mismo nombre que el que se intenta instalar
 
 Instalación
 ------------

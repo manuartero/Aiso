@@ -9,6 +9,7 @@
 #include <linux/vmalloc.h>      /* vmalloc */
 #include <linux/cdev.h>		    /* cdev */
 #include <linux/kthread.h>      /* kthread */
+#include <linux/device.h>       /* class_create */
 #include "./funciones_ioctl.h"  /* funciones ioctl */
 
 #define NOMBRE_THREAD "driver_thread"

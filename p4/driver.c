@@ -19,6 +19,7 @@ static unsigned int num_dispositivos = 1;
 static int num_menor = 0;
 static struct task_struct *kthread;
 static struct cdev * driver_struct;
+static struct class * driver_class;
 
 static const struct file_operations driver_fops = {
 	.owner = THIS_MODULE,
@@ -49,7 +50,11 @@ static int __init aiso_init(void)
 	cdev_init(driver_struct, &driver_fops);
 	cdev_add(driver_struct, num_mayor_menor, num_dispositivos);
 	
-    // 4) inicializamos variables
+    // 4) Crear nodo de dispositivo
+    driver_class = class_create(THIS_MODULE, NOMBRE_DEV);
+    device_create(driver_class, NULL, num_mayor_menor, NULL, NOMBRE_DEV);
+
+    // 5) inicializamos variables
     veces_abierto = 0;  
     num_mayor = MAJOR(num_mayor_menor);
     caracteres_escritos = 0;
@@ -72,10 +77,14 @@ static void __exit aiso_exit(void)
     // 2) des-registramos numero mayor y menor 
 	unregister_chrdev_region(num_mayor_menor, num_dispositivos);
 
-    // 3) liberamos el buffer	
+    // 3) destruir en nodo de dispositivo
+    device_destroy(driver_class, num_mayor_menor);
+    class_destroy(driver_class);
+
+    // 4) liberamos el buffer	
     kfree(buffer);
 	
-    // 4) paramos el kthread 
+    // 5) paramos el kthread 
     kthread_stop(kthread);
 
     printk(KERN_INFO "\nliberado registro de caracteres\n");
