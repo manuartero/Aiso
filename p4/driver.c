@@ -113,36 +113,31 @@ static int aiso_release(struct inode *inode, struct file *file)
  */
 static ssize_t aiso_read(struct file *file, char __user * buf, size_t lbuf, loff_t * ppos)
 {
-	int nbytes = 0;
-   
-	if (*ppos >= caracteres_escritos) {
-		return 0;
+    if (lbuf+file->f_pos > discosize){
+    printk(KERN_INFO "Se sale del rango del fichero\n");
+    return -1;
     }
-		
-	memcpy(buf, buffer + cabeza_lectura, caracteres_escritos);
-	nbytes = caracteres_escritos;
-    *ppos = *ppos + caracteres_escritos;
 
-	printk(KERN_INFO "aiso_read => nbytes=%d", nbytes);
-	return nbytes;
+	memcpy(buf, buffer + cabeza_lectura,lbuf);
+	
+	printk(KERN_INFO "aiso_read => nbytes=%d", lbuf);
+	return lbuf;
 }
 
 static ssize_t aiso_write(struct file *file, const char __user * buf, size_t lbuf, loff_t * ppos)
 {
 	int nbytes = 0;
-    printk(KERN_INFO "hola q ace\n");
+
     nbytes = copy_from_user(buffer + file->f_pos, buf, lbuf);	
     
     if (nbytes){
         printk(KERN_ALERT "ERROR : aiso_write => copy_from_user \n");    
         return -EFAULT;
     }
-	
-    
+	 
     caracteres_escritos_tmp= lbuf - nbytes;
 
-    cabeza_lectura += caracteres_escritos_tmp; 
-    caracteres_escritos += caracteres_escritos_tmp;         
+    cabeza_lectura += caracteres_escritos_tmp;         
     file->f_pos += caracteres_escritos_tmp ;
   
     
@@ -169,12 +164,15 @@ extern int aiso_ioctl
     long_buffer = 0;
 
     switch(ioctl_num){
+    
+    	// no usar
         case IOCTL_READ: 
             //            aiso_read(file, buffer, lon_buffer, posicion)
             char_leidos = aiso_read(file, (char *) ioctl_param, discosize, ppos);
             put_user('\0', (char *) ioctl_param + char_leidos);
             break;
 
+		//no usar
         case IOCTL_WRITE:
             buffer_entrada = (char *) ioctl_param;
             long_buffer = (unsigned int) strlen(buffer_entrada);
@@ -184,23 +182,27 @@ extern int aiso_ioctl
             caracteres_escritos += caracteres_escritos_tmp;         
             file->f_pos += caracteres_escritos_tmp ;
             break;
-
+            
+		//no usar
         case IOCTL_LSEEK_SET: 
             return aiso_lseek(file, (int) ioctl_param,0);
             break;
-            
+         
+        //no usar    
         case IOCTL_LSEEK_CURR: 
             return aiso_lseek(file, (int) ioctl_param,1);
             break;
-            
+                 
+        //no usar        
         case IOCTL_LSEEK_END: 
             return aiso_lseek(file, (int) ioctl_param,2);
             break;
-
+		         
+        //no usar    
         case IOCTL_RESET: 
             aiso_reset(file);
             break;
-
+		
         case IOCTL_WRITTEN:
             aiso_state(file, (int *) ioctl_param, 2);
             break;

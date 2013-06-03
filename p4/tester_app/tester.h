@@ -13,7 +13,7 @@
 #include <string.h>
 
 /* Declaracion de funciones */
-static int leer_fichero(void);            
+static int leer_fichero(int count);            
 static inline void reset_buffer(void);    
 static inline void escribir_fichero(char * texto);
 static inline void modificar_buffer(int cantidad);

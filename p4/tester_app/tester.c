@@ -50,7 +50,7 @@ int main (int argc, char **argv)
     limpiar_flags();
 
     // abrimos el fichero
-    fd_fichero = open(RUTA_FICHERO, O_RDONLY);
+    fd_fichero = open(RUTA_FICHERO, O_RDWR);
     if (fd_fichero == -1){
         perror("error : inicio, abrir fichero"),exit(-1);
     }
@@ -116,9 +116,7 @@ int main (int argc, char **argv)
         case 0:	// $> test [opciones] 
             if(no_flag){
                 consulta();
-            } else if(read_mode){
-                leer_fichero();            
-            } else if(reset_mode) {
+            }else if(reset_mode) {
                 reset_buffer();    
             } else if(lseek_set){
                 lseek_fichero(0,0);
@@ -137,6 +135,8 @@ int main (int argc, char **argv)
                 escribir_fichero(argv[2]);
             } else if (modify_mode) {
                 modificar_buffer((int) atoi(argv[2]));
+            }else if(read_mode){
+                leer_fichero(atoi(argv[2]));            
             } else if (lseek_set) {
                 lseek_fichero((int) atoi(argv[2]),0);
             }else if (lseek_curr) {
@@ -170,7 +170,7 @@ static void mostrar_ayuda(void)
 {
     printf("uso: [OPCIONES] [ARGUMENTO]\n");
     printf("./tester_app : consulta el numero de caracteres escritos \n");
-    printf("./tester_app -r : Leer el fichero\n");
+    printf("./tester_app -r :{numero} Leer del fichero un numero de caracteres\n");
     printf("./tester_app -R : Reset el buffer\n");
    // printf("./tester_app -l : Posiciona la cabeza al incio\n");
     printf("./tester_app -s {numero} : Posiciona la cabeza a la posicion indicada\n");
@@ -196,22 +196,14 @@ static inline void consulta(void)
 /** 
  * Imprime el fichero
  */
-static int leer_fichero(void)
+static int leer_fichero(int count)
 {
-    int respuesta = 0;
+    int respuesta = 0;   
     
-    // guardamos posicion    
-    ioctl(fd_fichero, IOCTL_POINTER, &posicion);   
-
-    // leemos desde el principio del buffer
-    respuesta |= ioctl(fd_fichero, IOCTL_LSEEK_SET, 0);
-	respuesta |= ioctl(fd_fichero, IOCTL_READ, buffer);
-
-    // restauramos el puntero de escritura
-    respuesta |= ioctl(fd_fichero, IOCTL_LSEEK_SET, posicion);
+    respuesta = read(fd_fichero,buffer,count);
     
     if(respuesta < 0){
-		printf("error : ejecucion, lectura fichero buffer=>%s\n", buffer);
+		printf("error : ejecucion, lectura fichero \n");
         exit(-7);
 	}	
 
@@ -269,8 +261,8 @@ static inline void lseek_fichero(int nueva_posicion,int modo)
 static inline void escribir_fichero(char * texto)
 {
     int respuesta;
-    //respuesta = ioctl(fd_fichero, IOCTL_WRITE, texto);
-    respuesta = write(fd_fichero,texto,1);
+  
+    respuesta = write(fd_fichero,texto,strlen(texto));
 
     if(respuesta < 0){
 		printf("error : ejecucion, escribir fichero texto=>%s\n", texto);
